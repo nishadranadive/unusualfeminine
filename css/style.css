@@ -389,66 +389,6 @@ a { text-decoration: none; color: inherit; }
 .form-msg.success { color: #2e7d32; }
 .form-msg.error   { color: #b71c1c; }
 
-/* ── Email Signup ── */
-#signup {
-  background: var(--accent);
-  padding: 4rem 2rem;
-  text-align: center;
-}
-
-.signup-inner { max-width: 480px; margin-inline: auto; }
-
-#signup h2 {
-  font-family: var(--serif);
-  font-size: 2rem;
-  color: #fff;
-  margin-bottom: 0.6rem;
-}
-
-.signup-inner > p {
-  color: rgba(255,255,255,0.8);
-  margin-bottom: 1.5rem;
-}
-
-.signup-form {
-  display: flex;
-  position: relative;
-  max-width: 420px;
-  margin-inline: auto;
-  margin-bottom: 0.75rem;
-}
-
-.signup-form input[type="email"] {
-  flex: 1;
-  padding: 0.85rem 1.25rem;
-  border: none;
-  border-radius: 2px 0 0 2px;
-  font-family: var(--sans);
-  font-size: 0.95rem;
-  outline: none;
-}
-
-.signup-form input[type="email"]::placeholder { color: #aaa; }
-
-.signup-form button {
-  padding: 0.85rem 1.4rem;
-  background: var(--dark);
-  color: #fff;
-  border: none;
-  border-radius: 0 2px 2px 0;
-  font-family: var(--sans);
-  font-size: 0.78rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.signup-form button:hover { background: #000; }
-
-.signup-success { color: #fff; font-size: 0.9rem; margin-top: 0.5rem; }
-.signup-note    { color: rgba(255,255,255,0.5); font-size: 0.78rem; }
-
 /* ── View count in lightbox ── */
 .lb-views {
   font-size: 0.78rem;
@@ -545,81 +485,8 @@ a { text-decoration: none; color: inherit; }
   line-height: 1.6;
 }
 
-/* ── Email Signup ── */
-#signup {
-  background: var(--accent);
-  padding: 4.5rem 2rem;
-  text-align: center;
-}
-
-.signup-inner {
-  max-width: 520px;
-  margin-inline: auto;
-}
-
-#signup h2 {
-  font-family: var(--serif);
-  font-size: 2.2rem;
-  color: #fff;
-  margin-bottom: 0.75rem;
-}
-
-#signup > .signup-inner > p {
-  color: rgba(255,255,255,0.8);
-  margin-bottom: 2rem;
-  font-size: 1rem;
-}
-
-.signup-form {
-  display: flex;
-  gap: 0;
-  position: relative;
-  max-width: 440px;
-  margin-inline: auto;
-  margin-bottom: 1rem;
-}
-
-.signup-form input[type="email"] {
-  flex: 1;
-  padding: 0.85rem 1.25rem;
-  border: none;
-  border-radius: 2px 0 0 2px;
-  font-family: var(--sans);
-  font-size: 0.95rem;
-  outline: none;
-  background: #fff;
-  color: var(--text);
-}
-
-.signup-form input[type="email"]::placeholder { color: #aaa; }
-
-.signup-form button {
-  padding: 0.85rem 1.5rem;
-  background: var(--dark);
-  color: #fff;
-  border: none;
-  border-radius: 0 2px 2px 0;
-  font-family: var(--sans);
-  font-size: 0.8rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.signup-form button:hover { background: #000; }
-
-.signup-note {
-  color: rgba(255,255,255,0.55);
-  font-size: 0.78rem;
-  letter-spacing: 0.05em;
-}
-
 @media (max-width: 640px) {
   .commissions-grid { grid-template-columns: 1fr; }
-  .signup-form { flex-direction: column; }
-  .signup-form input[type="email"] { border-radius: 2px 2px 0 0; }
-  .signup-form button { border-radius: 0 0 2px 2px; }
 }
 
 /* ── Likes ── */

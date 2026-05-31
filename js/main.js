@@ -255,33 +255,6 @@ document.getElementById('contactForm').addEventListener('submit', async e => {
   btn.textContent = 'Send Message';
 });
 
-// ── Email signup ──
-document.getElementById('signupForm').addEventListener('submit', async e => {
-  e.preventDefault();
-  const form    = e.target;
-  const success = form.parentElement.querySelector('.signup-success');
-  const btn     = form.querySelector('button');
-
-  btn.disabled = true;
-  btn.textContent = '...';
-
-  const { error } = await sb.from('signups').insert({
-    email: form.email.value.trim(),
-  });
-
-  if (!error) {
-    success.hidden = false;
-    form.hidden    = true;
-  } else if (error.code === '23505') {
-    success.hidden = false;
-    success.textContent = 'You are already subscribed!';
-    form.hidden = true;
-  }
-
-  btn.disabled = false;
-  btn.textContent = 'Subscribe';
-});
-
 // ── Init ──
 sortGallery('newest');
 loadLikes();
