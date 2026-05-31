@@ -194,6 +194,25 @@ document.addEventListener('keydown', e => {
   if (e.key === 'ArrowLeft')  showPrev();
 });
 
+// ── Commission type selection ──
+document.querySelectorAll('.commission-chooser .commission-card').forEach(card => {
+  function selectCard() {
+    document.getElementById('commissionTypeInput').value = card.dataset.type;
+    document.getElementById('commissionTypeBadge').textContent = card.dataset.label;
+    document.getElementById('commissionStep1').hidden = true;
+    document.getElementById('commissionStep2').hidden = false;
+    document.getElementById('commissionStep2').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  card.addEventListener('click', selectCard);
+  card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') selectCard(); });
+});
+
+document.getElementById('commissionChangeBtn').addEventListener('click', () => {
+  document.getElementById('commissionStep1').hidden = false;
+  document.getElementById('commissionStep2').hidden = true;
+  document.getElementById('commissionStep1').scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+
 // ── Commission form ──
 document.getElementById('commissionForm').addEventListener('submit', async e => {
   e.preventDefault();

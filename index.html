@@ -225,42 +225,53 @@
     <div class="commissions-inner">
       <h2>Commissions</h2>
       <p class="commissions-intro">I take on a limited number of custom paintings at a time. If you have something in mind, reach out and we can talk about it.</p>
-      <div class="commissions-grid">
-        <div class="commission-card">
-          <span class="commission-icon">🎨</span>
-          <h3>Custom Acrylic Paintings</h3>
-          <p>Have a scene, subject or idea you want painted? Share a reference photo or describe what you have in mind and we will work on it together.</p>
+
+      <!-- Step 1: choose type -->
+      <div id="commissionStep1">
+        <p class="commission-choose-label">What would you like?</p>
+        <div class="commissions-grid commission-chooser">
+          <div class="commission-card" data-type="custom" data-label="Custom Acrylic Painting" role="button" tabindex="0">
+            <span class="commission-icon">🎨</span>
+            <h3>Custom Acrylic Paintings</h3>
+            <p>Have a scene, subject or idea you want painted? Share a reference photo or describe what you have in mind and we will work on it together.</p>
+            <span class="commission-select-hint">Select &rarr;</span>
+          </div>
+          <div class="commission-card" data-type="pet" data-label="Pet Portrait" role="button" tabindex="0">
+            <span class="commission-icon">🐾</span>
+            <h3>Pet Portraits</h3>
+            <p>Send me a clear photo of your pet and I will paint them in acrylics. A great gift and something you will actually want to hang on a wall.</p>
+            <span class="commission-select-hint">Select &rarr;</span>
+          </div>
         </div>
-        <div class="commission-card">
-          <span class="commission-icon">🐾</span>
-          <h3>Pet Portraits</h3>
-          <p>Send me a clear photo of your pet and I will paint them in acrylics. A great gift and something you will actually want to hang on a wall.</p>
-        </div>
-      </div>
-      <div class="commissions-process">
-        <h3>How it works</h3>
-        <ol>
-          <li>Fill out the form below with your idea</li>
-          <li>We agree on size, timeline and price</li>
-          <li>I send you progress updates as I work</li>
-          <li>Final painting shipped to you once complete</li>
-        </ol>
       </div>
 
-      <form id="commissionForm" class="inquiry-form">
-        <div class="form-row">
-          <input type="text" name="name" placeholder="Your name" required />
-          <input type="email" name="email" placeholder="Your email" required />
+      <!-- Step 2: form (hidden until type chosen) -->
+      <div id="commissionStep2" hidden>
+        <div class="commission-type-selected">
+          <span class="commission-type-badge" id="commissionTypeBadge"></span>
+          <button class="commission-change-btn" id="commissionChangeBtn">&larr; Change</button>
         </div>
-        <select name="type">
-          <option value="custom">Custom Acrylic Painting</option>
-          <option value="pet">Pet Portrait</option>
-        </select>
-        <textarea name="description" placeholder="Tell me what you have in mind..." rows="4" required></textarea>
-        <button type="submit" class="btn-primary">Send Request</button>
-        <p class="form-msg success" hidden>Thank you! I will get back to you soon.</p>
-        <p class="form-msg error" hidden>Something went wrong. Please try again.</p>
-      </form>
+        <div class="commissions-process">
+          <h3>How it works</h3>
+          <ol>
+            <li>Fill out the form below with your idea</li>
+            <li>We agree on size, timeline and price</li>
+            <li>I send you progress updates as I work</li>
+            <li>Final painting shipped to you once complete</li>
+          </ol>
+        </div>
+        <form id="commissionForm" class="inquiry-form">
+          <input type="hidden" name="type" id="commissionTypeInput" />
+          <div class="form-row">
+            <input type="text" name="name" placeholder="Your name" required />
+            <input type="email" name="email" placeholder="Your email" required />
+          </div>
+          <textarea name="description" placeholder="Tell me what you have in mind..." rows="4" required></textarea>
+          <button type="submit" class="btn-primary">Send Request</button>
+          <p class="form-msg success" hidden>Thank you! I will get back to you soon.</p>
+          <p class="form-msg error" hidden>Something went wrong. Please try again.</p>
+        </form>
+      </div>
     </div>
   </section>
 

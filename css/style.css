@@ -431,12 +431,31 @@ a { text-decoration: none; color: inherit; }
   margin-bottom: 3rem;
 }
 
+.commission-choose-label {
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 1.25rem;
+}
+
 .commission-card {
   background: #fff;
-  border: 1px solid #e8e3dc;
+  border: 1.5px solid #e8e3dc;
   border-radius: 4px;
   padding: 2rem 1.75rem;
   text-align: left;
+}
+
+.commission-chooser .commission-card {
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+}
+
+.commission-chooser .commission-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(139,58,98,0.1);
 }
 
 .commission-icon {
@@ -456,6 +475,52 @@ a { text-decoration: none; color: inherit; }
   color: var(--muted);
   line-height: 1.7;
 }
+
+.commission-select-hint {
+  display: inline-block;
+  margin-top: 1.25rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.commission-chooser .commission-card:hover .commission-select-hint { opacity: 1; }
+
+.commission-type-selected {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.commission-type-badge {
+  display: inline-block;
+  padding: 0.35rem 1rem;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border-radius: 2px;
+}
+
+.commission-change-btn {
+  background: none;
+  border: none;
+  font-family: var(--sans);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s;
+}
+
+.commission-change-btn:hover { color: var(--text); }
 
 .commissions-process {
   background: var(--dark);
