@@ -5,6 +5,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const likeCounts  = {};
 const LIKED_KEY   = 'uf_liked';
+const likeInFlight = new Set();
 
 function getLiked() {
   return JSON.parse(localStorage.getItem(LIKED_KEY) || '[]');
@@ -45,10 +46,15 @@ function updateLightboxLike(paintingId) {
 }
 
 async function toggleLike(paintingId) {
-  const liked   = getLiked();
-  const isLiked = liked.includes(paintingId);
-  const current = likeCounts[paintingId] || 0;
-  const newCount = isLiked ? Math.max(0, current - 1) : current + 1;
+  if (likeInFlight.has(paintingId)) return;
+  likeInFlight.add(paintingId);
+
+  const btn = document.getElementById('lbLikeBtn');
+  btn.disabled = true;
+
+  const liked    = getLiked();
+  const isLiked  = liked.includes(paintingId);
+  const newCount = isLiked ? Math.max(0, (likeCounts[paintingId] || 0) - 1) : (likeCounts[paintingId] || 0) + 1;
 
   likeCounts[paintingId] = newCount;
   saveLiked(isLiked ? liked.filter(id => id !== paintingId) : [...liked, paintingId]);
@@ -57,6 +63,9 @@ async function toggleLike(paintingId) {
   updateLightboxLike(paintingId);
 
   await sb.from('likes').upsert({ painting: paintingId, count: newCount });
+
+  likeInFlight.delete(paintingId);
+  btn.disabled = false;
 }
 
 // ── Nav scroll ──
