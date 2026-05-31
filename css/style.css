@@ -305,8 +305,12 @@ a { text-decoration: none; color: inherit; }
 
 /* ── Contact ── */
 #contact {
+  background: var(--dark);
   padding: 5rem 2rem;
   text-align: center;
+}
+
+.contact-inner {
   max-width: 640px;
   margin-inline: auto;
 }
@@ -314,11 +318,12 @@ a { text-decoration: none; color: inherit; }
 #contact h2 {
   font-family: var(--serif);
   font-size: 2.5rem;
+  color: var(--cream);
   margin-bottom: 0.75rem;
 }
 
-#contact > .contact-inner > p {
-  color: var(--muted);
+.contact-inner > p {
+  color: rgba(248,245,240,0.65);
   margin-bottom: 2rem;
   font-size: 1.05rem;
 }
@@ -326,11 +331,11 @@ a { text-decoration: none; color: inherit; }
 .contact-alt {
   margin-top: 1.5rem;
   font-size: 0.88rem;
-  color: var(--muted);
+  color: rgba(248,245,240,0.45);
 }
 
 .contact-alt a {
-  color: var(--accent);
+  color: var(--accent2);
   text-decoration: underline;
 }
 

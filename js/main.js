@@ -212,7 +212,6 @@ document.getElementById('commissionForm').addEventListener('submit', async e => 
     email:       form.email.value.trim(),
     type:        form.type.value,
     description: form.description.value.trim(),
-    budget:      form.budget.value.trim() || null,
   });
 
   if (err) {
