@@ -3,21 +3,24 @@ const SUPABASE_URL = 'https://djozmuyolvuzkcykoqhb.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_M5f5QO7e_PiAUGKLz5hUeQ_BrYyo1wl';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const likeCounts  = {};
-const LIKED_KEY   = 'uf_liked';
+// ── Likes ──
+const likeCounts   = {};
+const viewCounts   = {};
+const LIKED_KEY    = 'uf_liked';
 const likeInFlight = new Set();
 
-function getLiked() {
-  return JSON.parse(localStorage.getItem(LIKED_KEY) || '[]');
-}
-function saveLiked(arr) {
-  localStorage.setItem(LIKED_KEY, JSON.stringify(arr));
-}
+function getLiked() { return JSON.parse(localStorage.getItem(LIKED_KEY) || '[]'); }
+function saveLiked(arr) { localStorage.setItem(LIKED_KEY, JSON.stringify(arr)); }
 
 async function loadLikes() {
   const { data } = await sb.from('likes').select('painting, count');
   if (data) data.forEach(r => { likeCounts[r.painting] = r.count; });
   updateAllBadges();
+}
+
+async function loadViews() {
+  const { data } = await sb.from('views').select('painting, count');
+  if (data) data.forEach(r => { viewCounts[r.painting] = r.count; });
 }
 
 function paintingIdFromItem(el) {
@@ -36,9 +39,9 @@ function updateAllBadges() {
 }
 
 function updateLightboxLike(paintingId) {
-  const liked  = getLiked();
-  const count  = likeCounts[paintingId] || 0;
-  const btn    = document.getElementById('lbLikeBtn');
+  const liked   = getLiked();
+  const count   = likeCounts[paintingId] || 0;
+  const btn     = document.getElementById('lbLikeBtn');
   const countEl = document.getElementById('lbLikeCount');
   btn.querySelector('.lb-like-heart').textContent = liked.includes(paintingId) ? '♥' : '♡';
   btn.classList.toggle('liked', liked.includes(paintingId));
@@ -54,18 +57,26 @@ async function toggleLike(paintingId) {
 
   const liked    = getLiked();
   const isLiked  = liked.includes(paintingId);
-  const newCount = isLiked ? Math.max(0, (likeCounts[paintingId] || 0) - 1) : (likeCounts[paintingId] || 0) + 1;
+  const newCount = isLiked
+    ? Math.max(0, (likeCounts[paintingId] || 0) - 1)
+    : (likeCounts[paintingId] || 0) + 1;
 
   likeCounts[paintingId] = newCount;
   saveLiked(isLiked ? liked.filter(id => id !== paintingId) : [...liked, paintingId]);
-
   updateAllBadges();
   updateLightboxLike(paintingId);
 
   await sb.from('likes').upsert({ painting: paintingId, count: newCount });
-
   likeInFlight.delete(paintingId);
   btn.disabled = false;
+}
+
+// ── View count ──
+async function incrementView(paintingId) {
+  const current = (viewCounts[paintingId] || 0) + 1;
+  viewCounts[paintingId] = current;
+  document.getElementById('lbViews').textContent = current + ' views';
+  await sb.from('views').upsert({ painting: paintingId, count: current });
 }
 
 // ── Nav scroll ──
@@ -110,6 +121,7 @@ const lbImg     = document.getElementById('lbImg');
 const lbTitle   = document.getElementById('lbTitle');
 const lbMedium  = document.getElementById('lbMedium');
 const lbYear    = document.getElementById('lbYear');
+const lbViews   = document.getElementById('lbViews');
 const lbDesc    = document.getElementById('lbDesc');
 const lbStatus  = document.getElementById('lbStatus');
 const lbLikeBtn = document.getElementById('lbLikeBtn');
@@ -119,23 +131,17 @@ let currentPaintingId = '';
 
 function rebindLightbox() {
   items = Array.from(grid.querySelectorAll('.gallery-item'));
-
-  // Attach like badges dynamically
   items.forEach(item => {
     if (!item.querySelector('.like-badge')) {
       const id    = paintingIdFromItem(item);
       const badge = document.createElement('div');
-      badge.className   = 'like-badge';
-      badge.dataset.id  = id;
-      badge.innerHTML   = '<span class="like-heart">♡</span><span class="like-count"></span>';
+      badge.className  = 'like-badge';
+      badge.dataset.id = id;
+      badge.innerHTML  = '<span class="like-heart">♡</span><span class="like-count"></span>';
       item.appendChild(badge);
     }
   });
-
-  items.forEach((item, i) => {
-    item.onclick = () => openLightbox(i);
-  });
-
+  items.forEach((item, i) => { item.onclick = () => openLightbox(i); });
   updateAllBadges();
 }
 
@@ -153,6 +159,7 @@ function populateLightbox(index) {
   lbDesc.textContent   = el.dataset.description || '';
   lbStatus.textContent = status === 'sold' ? 'Sold' : 'Available';
   lbStatus.className   = 'lb-status ' + status;
+  lbViews.textContent  = (viewCounts[currentPaintingId] || 0) + ' views';
   updateLightboxLike(currentPaintingId);
 }
 
@@ -162,6 +169,7 @@ function openLightbox(index) {
   lightbox.classList.add('open');
   lightbox.setAttribute('aria-hidden', 'false');
   document.body.style.overflow = 'hidden';
+  incrementView(currentPaintingId);
 }
 
 function closeLightbox() {
@@ -186,6 +194,96 @@ document.addEventListener('keydown', e => {
   if (e.key === 'ArrowLeft')  showPrev();
 });
 
+// ── Commission form ──
+document.getElementById('commissionForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const form    = e.target;
+  const success = form.querySelector('.success');
+  const error   = form.querySelector('.error');
+  const btn     = form.querySelector('button[type=submit]');
+
+  btn.disabled = true;
+  btn.textContent = 'Sending...';
+  success.hidden = true;
+  error.hidden   = true;
+
+  const { error: err } = await sb.from('commissions').insert({
+    name:        form.name.value.trim(),
+    email:       form.email.value.trim(),
+    type:        form.type.value,
+    description: form.description.value.trim(),
+    budget:      form.budget.value.trim() || null,
+  });
+
+  if (err) {
+    error.hidden = false;
+  } else {
+    success.hidden = false;
+    form.reset();
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Send Request';
+});
+
+// ── Contact form ──
+document.getElementById('contactForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const form    = e.target;
+  const success = form.querySelector('.success');
+  const error   = form.querySelector('.error');
+  const btn     = form.querySelector('button[type=submit]');
+
+  btn.disabled = true;
+  btn.textContent = 'Sending...';
+  success.hidden = true;
+  error.hidden   = true;
+
+  const { error: err } = await sb.from('messages').insert({
+    name:    form.name.value.trim(),
+    email:   form.email.value.trim(),
+    message: form.message.value.trim(),
+  });
+
+  if (err) {
+    error.hidden = false;
+  } else {
+    success.hidden = false;
+    form.reset();
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Send Message';
+});
+
+// ── Email signup ──
+document.getElementById('signupForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const form    = e.target;
+  const success = form.parentElement.querySelector('.signup-success');
+  const btn     = form.querySelector('button');
+
+  btn.disabled = true;
+  btn.textContent = '...';
+
+  const { error } = await sb.from('signups').insert({
+    email: form.email.value.trim(),
+  });
+
+  if (!error) {
+    success.hidden = false;
+    form.hidden    = true;
+  } else if (error.code === '23505') {
+    success.hidden = false;
+    success.textContent = 'You are already subscribed!';
+    form.hidden = true;
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Subscribe';
+});
+
 // ── Init ──
 sortGallery('newest');
 loadLikes();
+loadViews();

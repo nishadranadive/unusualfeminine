@@ -240,15 +240,42 @@
       <div class="commissions-process">
         <h3>How it works</h3>
         <ol>
-          <li>Message me on Instagram with your idea and a reference photo if you have one</li>
+          <li>Fill out the form below with your idea</li>
           <li>We agree on size, timeline and price</li>
           <li>I send you progress updates as I work</li>
           <li>Final painting shipped to you once complete</li>
         </ol>
       </div>
-      <a href="https://www.instagram.com/unusualfeminine" target="_blank" rel="noopener" class="btn-primary">
-        Request a Commission
-      </a>
+
+      <form id="commissionForm" class="inquiry-form">
+        <div class="form-row">
+          <input type="text" name="name" placeholder="Your name" required />
+          <input type="email" name="email" placeholder="Your email" required />
+        </div>
+        <select name="type">
+          <option value="custom">Custom Acrylic Painting</option>
+          <option value="pet">Pet Portrait</option>
+        </select>
+        <textarea name="description" placeholder="Tell me what you have in mind..." rows="4" required></textarea>
+        <input type="text" name="budget" placeholder="Budget — optional" />
+        <button type="submit" class="btn-primary">Send Request</button>
+        <p class="form-msg success" hidden>Thank you! I will get back to you soon.</p>
+        <p class="form-msg error" hidden>Something went wrong. Please try again.</p>
+      </form>
+    </div>
+  </section>
+
+  <!-- EMAIL SIGNUP -->
+  <section id="signup">
+    <div class="signup-inner">
+      <h2>Stay in the Loop</h2>
+      <p>New paintings and updates. No spam.</p>
+      <form id="signupForm" class="signup-form">
+        <input type="email" name="email" placeholder="your@email.com" required aria-label="Email address" />
+        <button type="submit">Subscribe</button>
+      </form>
+      <p class="signup-success" hidden>You are in!</p>
+      <p class="signup-note">Unsubscribe any time.</p>
     </div>
   </section>
 
@@ -256,10 +283,18 @@
   <section id="contact">
     <div class="contact-inner">
       <h2>Get in Touch</h2>
-      <p>For questions or just to say hi, find me on Instagram.</p>
-      <a href="https://www.instagram.com/unusualfeminine" target="_blank" rel="noopener" class="btn-primary">
-        Message on Instagram
-      </a>
+      <p>Questions, feedback or just want to say hi.</p>
+      <form id="contactForm" class="inquiry-form">
+        <div class="form-row">
+          <input type="text" name="name" placeholder="Your name" required />
+          <input type="email" name="email" placeholder="Your email" required />
+        </div>
+        <textarea name="message" placeholder="Your message..." rows="4" required></textarea>
+        <button type="submit" class="btn-primary">Send Message</button>
+        <p class="form-msg success" hidden>Message sent! I will get back to you.</p>
+        <p class="form-msg error" hidden>Something went wrong. Please try again.</p>
+      </form>
+      <p class="contact-alt">Or find me on <a href="https://www.instagram.com/unusualfeminine" target="_blank" rel="noopener">@unusualfeminine</a></p>
     </div>
   </section>
 
@@ -282,6 +317,7 @@
         <h3 id="lbTitle"></h3>
         <p id="lbMedium" class="lb-meta"></p>
         <p id="lbYear" class="lb-meta"></p>
+        <p id="lbViews" class="lb-views"></p>
         <p id="lbDesc" class="lb-desc"></p>
         <button class="lb-like-btn" id="lbLikeBtn" aria-label="Like this painting">
           <span class="lb-like-heart">♡</span>
