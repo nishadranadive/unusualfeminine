@@ -3,8 +3,25 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Madhuja Gosavi — unusualfeminine</title>
-  <meta name="description" content="Original acrylic paintings by Madhuja Gosavi (@unusualfeminine)" />
+  <title>Madhuja Gosavi | unusualfeminine</title>
+  <meta name="description" content="Original acrylic paintings by Madhuja Gosavi. Bold, textured work spanning animals, seascapes and more. Commissions open." />
+
+  <!-- Open Graph (WhatsApp, Instagram, Facebook, iMessage previews) -->
+  <meta property="og:title" content="Madhuja Gosavi | unusualfeminine" />
+  <meta property="og:description" content="Original acrylic paintings. Bold, textured work spanning animals, seascapes and more. Commissions open." />
+  <meta property="og:image" content="https://nishadranadive.github.io/unusualfeminine/images/IMG_3313.JPG" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="1200" />
+  <meta property="og:url" content="https://nishadranadive.github.io/unusualfeminine/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="unusualfeminine" />
+
+  <!-- Twitter / X card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Madhuja Gosavi | unusualfeminine" />
+  <meta name="twitter:description" content="Original acrylic paintings. Bold, textured work spanning animals, seascapes and more." />
+  <meta name="twitter:image" content="https://nishadranadive.github.io/unusualfeminine/images/IMG_3313.JPG" />
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
@@ -17,6 +34,7 @@
     <a href="#" class="nav-logo">MG</a>
     <ul class="nav-links">
       <li><a href="#gallery">Gallery</a></li>
+      <li><a href="#commissions">Commissions</a></li>
       <li><a href="#about">About</a></li>
       <li><a href="#contact">Contact</a></li>
     </ul>
@@ -42,11 +60,16 @@
         <button class="tab coming-soon" disabled>Raising Art <span>Soon</span></button>
         <button class="tab coming-soon" disabled>Clay Art <span>Soon</span></button>
       </div>
+      <div class="sort-row">
+        <span class="sort-label">Sort:</span>
+        <button class="sort-btn active" data-sort="newest">Newest</button>
+        <button class="sort-btn" data-sort="oldest">Oldest</button>
+      </div>
     </div>
 
     <div class="gallery-grid" id="galleryGrid">
 
-      <div class="gallery-item" data-category="acrylic"
+      <div class="gallery-item" data-category="acrylic" data-order="1"
            data-title="Canopy"
            data-medium="Acrylic on canvas"
            data-year="2024"
@@ -56,7 +79,7 @@
         <div class="item-hover"><span>View</span></div>
       </div>
 
-      <div class="gallery-item" data-category="acrylic"
+      <div class="gallery-item" data-category="acrylic" data-order="2"
            data-title="Plumage"
            data-medium="Acrylic on canvas"
            data-year="2024"
@@ -66,7 +89,7 @@
         <div class="item-hover"><span>View</span></div>
       </div>
 
-      <div class="gallery-item" data-category="acrylic"
+      <div class="gallery-item" data-category="acrylic" data-order="3"
            data-title="Still Waters"
            data-medium="Acrylic on canvas"
            data-year="2024"
@@ -76,7 +99,7 @@
         <div class="item-hover"><span>View</span></div>
       </div>
 
-      <div class="gallery-item" data-category="acrylic"
+      <div class="gallery-item" data-category="acrylic" data-order="4"
            data-title="Crimson"
            data-medium="Acrylic on canvas"
            data-year="2024"
@@ -86,7 +109,7 @@
         <div class="item-hover"><span>View</span></div>
       </div>
 
-      <div class="gallery-item" data-category="acrylic"
+      <div class="gallery-item" data-category="acrylic" data-order="5"
            data-title="Deep Blue"
            data-medium="Acrylic on canvas"
            data-year="2024"
@@ -96,7 +119,7 @@
         <div class="item-hover"><span>View</span></div>
       </div>
 
-      <div class="gallery-item" data-category="acrylic"
+      <div class="gallery-item" data-category="acrylic" data-order="6"
            data-title="Daisy Days"
            data-medium="Acrylic on canvas"
            data-year="2024"
@@ -106,7 +129,7 @@
         <div class="item-hover"><span>View</span></div>
       </div>
 
-      <div class="gallery-item" data-category="acrylic"
+      <div class="gallery-item" data-category="acrylic" data-order="7"
            data-title="Little One"
            data-medium="Acrylic on canvas"
            data-year="2024"
@@ -116,7 +139,7 @@
         <div class="item-hover"><span>View</span></div>
       </div>
 
-      <div class="gallery-item" data-category="acrylic"
+      <div class="gallery-item" data-category="acrylic" data-order="8"
            data-title="Jack"
            data-medium="Acrylic on canvas"
            data-year="2024"
@@ -126,7 +149,7 @@
         <div class="item-hover"><span>View</span></div>
       </div>
 
-      <div class="gallery-item" data-category="acrylic"
+      <div class="gallery-item" data-category="acrylic" data-order="9"
            data-title="The Raven"
            data-medium="Acrylic on canvas"
            data-year="2024"
@@ -136,7 +159,7 @@
         <div class="item-hover"><span>View</span></div>
       </div>
 
-      <div class="gallery-item" data-category="acrylic"
+      <div class="gallery-item" data-category="acrylic" data-order="10"
            data-title="Glide"
            data-medium="Acrylic on canvas"
            data-year="2024"
@@ -146,7 +169,7 @@
         <div class="item-hover"><span>View</span></div>
       </div>
 
-      <div class="gallery-item" data-category="acrylic"
+      <div class="gallery-item" data-category="acrylic" data-order="11"
            data-title="Blood Moon Voyage I"
            data-medium="Acrylic on canvas"
            data-year="2024"
@@ -156,7 +179,7 @@
         <div class="item-hover"><span>View</span></div>
       </div>
 
-      <div class="gallery-item" data-category="acrylic"
+      <div class="gallery-item" data-category="acrylic" data-order="12"
            data-title="Serpent"
            data-medium="Acrylic on canvas"
            data-year="2024"
@@ -166,7 +189,7 @@
         <div class="item-hover"><span>View</span></div>
       </div>
 
-      <div class="gallery-item" data-category="acrylic"
+      <div class="gallery-item" data-category="acrylic" data-order="13"
            data-title="Blood Moon Voyage II"
            data-medium="Acrylic on canvas"
            data-year="2024"
@@ -197,11 +220,60 @@
     </div>
   </section>
 
+  <!-- COMMISSIONS -->
+  <section id="commissions">
+    <div class="commissions-inner">
+      <h2>Commissions</h2>
+      <p class="commissions-intro">I take on a limited number of custom paintings at a time. If you have something in mind, reach out and we can talk about it.</p>
+      <div class="commissions-grid">
+        <div class="commission-card">
+          <span class="commission-icon">🎨</span>
+          <h3>Custom Acrylic Paintings</h3>
+          <p>Have a scene, subject or idea you want painted? Share a reference photo or describe what you have in mind and we will work on it together.</p>
+        </div>
+        <div class="commission-card">
+          <span class="commission-icon">🐾</span>
+          <h3>Pet Portraits</h3>
+          <p>Send me a clear photo of your pet and I will paint them in acrylics. A great gift and something you will actually want to hang on a wall.</p>
+        </div>
+      </div>
+      <div class="commissions-process">
+        <h3>How it works</h3>
+        <ol>
+          <li>Message me on Instagram with your idea and a reference photo if you have one</li>
+          <li>We agree on size, timeline and price</li>
+          <li>I send you progress updates as I work</li>
+          <li>Final painting shipped to you once complete</li>
+        </ol>
+      </div>
+      <a href="https://www.instagram.com/unusualfeminine" target="_blank" rel="noopener" class="btn-primary">
+        Request a Commission
+      </a>
+    </div>
+  </section>
+
+  <!-- EMAIL SIGNUP -->
+  <section id="signup">
+    <div class="signup-inner">
+      <h2>Stay in the Loop</h2>
+      <p>New paintings, upcoming work and occasional updates. No spam, just art.</p>
+      <!-- Replace the action URL below with your Mailchimp form action URL -->
+      <form class="signup-form" action="PASTE_YOUR_MAILCHIMP_URL_HERE" method="post" target="_blank" novalidate>
+        <input type="email" name="EMAIL" placeholder="your@email.com" required aria-label="Email address" />
+        <button type="submit">Subscribe</button>
+        <div style="position:absolute;left:-5000px" aria-hidden="true">
+          <input type="text" name="b_HIDDEN" tabindex="-1" value="" />
+        </div>
+      </form>
+      <p class="signup-note">No spam. Unsubscribe any time.</p>
+    </div>
+  </section>
+
   <!-- CONTACT -->
   <section id="contact">
     <div class="contact-inner">
       <h2>Get in Touch</h2>
-      <p>For commissions, questions, or just to say hi, find me on Instagram.</p>
+      <p>For questions or just to say hi, find me on Instagram.</p>
       <a href="https://www.instagram.com/unusualfeminine" target="_blank" rel="noopener" class="btn-primary">
         Message on Instagram
       </a>
@@ -228,6 +300,10 @@
         <p id="lbMedium" class="lb-meta"></p>
         <p id="lbYear" class="lb-meta"></p>
         <p id="lbDesc" class="lb-desc"></p>
+        <button class="lb-like-btn" id="lbLikeBtn" aria-label="Like this painting">
+          <span class="lb-like-heart">♡</span>
+          <span id="lbLikeCount">0</span>
+        </button>
         <a href="https://www.instagram.com/unusualfeminine" target="_blank" rel="noopener" class="btn-outline lb-cta">
           Enquire on Instagram
         </a>
@@ -235,6 +311,7 @@
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/main.js"></script>
 </body>
 </html>
