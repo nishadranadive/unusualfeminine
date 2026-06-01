@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — unusualfeminine</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/admin.css" />
+</head>
+<body class="login-view">
+
+  <!-- LOGIN -->
+  <div id="loginScreen">
+    <div class="login-box">
+      <p class="login-brand">MG</p>
+      <h1>Admin</h1>
+      <form id="loginForm">
+        <input type="password" id="passwordInput" placeholder="Password" required autofocus />
+        <button type="submit">Enter</button>
+        <p id="loginError" hidden>Wrong password. Try again.</p>
+      </form>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dashboard" hidden>
+
+    <header class="admin-header">
+      <span class="admin-brand">unusualfeminine <em>admin</em></span>
+      <button id="logoutBtn">Logout</button>
+    </header>
+
+    <!-- STATS -->
+    <div class="stats-strip">
+      <div class="stat-card">
+        <span id="statCommissions">—</span>
+        <label>Commissions</label>
+      </div>
+      <div class="stat-card">
+        <span id="statMessages">—</span>
+        <label>Messages</label>
+      </div>
+      <div class="stat-card">
+        <span id="statSignups">—</span>
+        <label>Signups</label>
+      </div>
+      <div class="stat-card">
+        <span id="statViews">—</span>
+        <label>Total Views</label>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tab-bar">
+      <button class="admin-tab active" data-tab="commissions">
+        Commissions <span class="unseen-badge" id="badgeCommissions" hidden></span>
+      </button>
+      <button class="admin-tab" data-tab="messages">
+        Messages <span class="unseen-badge" id="badgeMessages" hidden></span>
+      </button>
+      <button class="admin-tab" data-tab="signups">Signups</button>
+      <button class="admin-tab" data-tab="paintings">Paintings</button>
+    </div>
+
+    <!-- TAB CONTENT -->
+    <div class="tab-content">
+
+      <!-- COMMISSIONS -->
+      <div id="tabCommissions" class="tab-panel">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Type</th>
+              <th>Description</th>
+              <th>Budget</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody id="commissionsBody"></tbody>
+        </table>
+        <p class="empty-msg" id="emptyCommissions" hidden>No commission requests yet.</p>
+      </div>
+
+      <!-- MESSAGES -->
+      <div id="tabMessages" class="tab-panel" hidden>
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Message</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody id="messagesBody"></tbody>
+        </table>
+        <p class="empty-msg" id="emptyMessages" hidden>No messages yet.</p>
+      </div>
+
+      <!-- SIGNUPS -->
+      <div id="tabSignups" class="tab-panel" hidden>
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Email</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody id="signupsBody"></tbody>
+        </table>
+        <p class="empty-msg" id="emptySignups" hidden>No signups yet.</p>
+      </div>
+
+      <!-- PAINTINGS -->
+      <div id="tabPaintings" class="tab-panel" hidden>
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Painting</th>
+              <th>Views</th>
+              <th>Likes</th>
+            </tr>
+          </thead>
+          <tbody id="paintingsBody"></tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- DETAIL MODAL -->
+  <div id="detailModal" class="detail-modal" hidden>
+    <div class="detail-box">
+      <button class="detail-close">&times;</button>
+      <div id="detailContent"></div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>
