@@ -93,10 +93,33 @@ document.querySelectorAll('.nav-links a').forEach(a => {
   a.addEventListener('click', () => document.querySelector('.nav-links').classList.remove('open'));
 });
 
+// ── Pagination ──
+const PAGE_SIZE   = 9;
+let visibleCount  = PAGE_SIZE;
+const loadMoreBtn = document.getElementById('loadMoreBtn');
+const countEl     = document.getElementById('galleryCount');
+
+function applyPagination() {
+  const all = Array.from(grid.querySelectorAll('.gallery-item'));
+  all.forEach((el, i) => {
+    el.classList.toggle('hidden-item', i >= visibleCount);
+  });
+  const shown = Math.min(visibleCount, all.length);
+  countEl.textContent = `Showing ${shown} of ${all.length}`;
+  loadMoreBtn.hidden  = shown >= all.length;
+  rebindLightbox();
+}
+
+loadMoreBtn.addEventListener('click', () => {
+  visibleCount += PAGE_SIZE;
+  applyPagination();
+});
+
 // ── Sort ──
 const grid = document.getElementById('galleryGrid');
 
 function sortGallery(order) {
+  visibleCount = PAGE_SIZE;
   const els = Array.from(grid.querySelectorAll('.gallery-item'));
   els.sort((a, b) => {
     const aO = parseInt(a.dataset.order) || 0;
@@ -104,7 +127,7 @@ function sortGallery(order) {
     return order === 'oldest' ? aO - bO : bO - aO;
   });
   els.forEach(el => grid.appendChild(el));
-  rebindLightbox();
+  applyPagination();
 }
 
 document.querySelectorAll('.sort-btn').forEach(btn => {
@@ -130,7 +153,7 @@ let current = 0;
 let currentPaintingId = '';
 
 function rebindLightbox() {
-  items = Array.from(grid.querySelectorAll('.gallery-item'));
+  items = Array.from(grid.querySelectorAll('.gallery-item:not(.hidden-item)'));
   items.forEach(item => {
     if (!item.querySelector('.like-badge')) {
       const id    = paintingIdFromItem(item);
@@ -276,5 +299,6 @@ document.getElementById('contactForm').addEventListener('submit', async e => {
 
 // ── Init ──
 sortGallery('newest');
+applyPagination();
 loadLikes();
 loadViews();
