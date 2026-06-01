@@ -205,6 +205,16 @@ const PAINTING_NAMES = {
   IMG_3313: 'Blood Moon Voyage I',
   IMG_3314: 'Serpent',
   IMG_3317: 'Blood Moon Voyage II',
+  'painting-seagull': 'Harbourside',
+  'painting-robin': 'Little Robin',
+  'painting-cabin': 'Sanctuary',
+  'painting-road': 'The Long Road',
+  'painting-eagle': 'Sovereign',
+  'painting-ginkgo': 'Ginkgo',
+  'painting-tropical': 'Tropical',
+  'painting-canopy-summer': 'Summer Canopy',
+  'painting-rooster': 'The Cockerel',
+  'painting-plumeria': 'Plumeria',
 };
 
 function renderPaintings(views, likes) {
