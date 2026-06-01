@@ -3,10 +3,6 @@ const SUPABASE_KEY = 'sb_publishable_M5f5QO7e_PiAUGKLz5hUeQ_BrYyo1wl';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ── Auth ──
-const SESSION_KEY = 'uf_admin';
-
-function isLoggedIn() { return sessionStorage.getItem(SESSION_KEY) === '1'; }
-
 function showDashboard() {
   document.body.classList.remove('login-view');
   document.getElementById('loginScreen').hidden = true;
@@ -14,40 +10,63 @@ function showDashboard() {
   loadAll();
 }
 
-function logout() {
-  sessionStorage.removeItem(SESSION_KEY);
-  location.reload();
-}
+// Build login fields dynamically so browser can't autofill
+(function buildLoginFields() {
+  const wrap = document.getElementById('loginFields');
 
-document.getElementById('loginForm').addEventListener('submit', async e => {
-  e.preventDefault();
-  const input = document.getElementById('passwordInput').value;
-  const errEl = document.getElementById('loginError');
-  const btn   = e.target.querySelector('button');
+  const emailEl = document.createElement('input');
+  emailEl.setAttribute('type', 'text');
+  emailEl.setAttribute('placeholder', 'Email');
+  emailEl.setAttribute('autocomplete', 'off');
+  emailEl.id = 'emailInput';
 
-  btn.textContent = '...';
-  btn.disabled    = true;
-  errEl.hidden    = true;
+  const passEl = document.createElement('input');
+  passEl.setAttribute('type', 'text');
+  passEl.setAttribute('placeholder', 'Password');
+  passEl.setAttribute('autocomplete', 'off');
+  passEl.id = 'passwordInput';
+  passEl.style.webkitTextSecurity = 'disc';
 
-  const { data } = await sb
-    .from('admin_config')
-    .select('value')
-    .eq('key', 'password')
-    .single();
+  const btn = document.createElement('button');
+  btn.id          = 'loginBtn';
+  btn.textContent = 'Enter';
 
-  if (data?.value === input) {
-    sessionStorage.setItem(SESSION_KEY, '1');
-    showDashboard();
-  } else {
-    errEl.hidden    = false;
-    btn.textContent = 'Enter';
-    btn.disabled    = false;
-    document.getElementById('passwordInput').value = '';
-    document.getElementById('passwordInput').focus();
+  wrap.appendChild(emailEl);
+  wrap.appendChild(passEl);
+  wrap.appendChild(btn);
+
+  async function attemptLogin() {
+    const email    = emailEl.value.trim();
+    const password = passEl.value;
+    const errEl    = document.getElementById('loginError');
+    if (!email || !password) return;
+
+    btn.textContent = '...';
+    btn.disabled    = true;
+    errEl.hidden    = true;
+
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+
+    if (error) {
+      errEl.hidden    = false;
+      btn.textContent = 'Enter';
+      btn.disabled    = false;
+      passEl.value    = '';
+      passEl.focus();
+    } else {
+      showDashboard();
+    }
   }
-});
 
-document.getElementById('logoutBtn').addEventListener('click', logout);
+  btn.addEventListener('click', attemptLogin);
+  passEl.addEventListener('keydown', e => { if (e.key === 'Enter') attemptLogin(); });
+  emailEl.addEventListener('keydown', e => { if (e.key === 'Enter') passEl.focus(); });
+})();
+
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+  await sb.auth.signOut();
+  location.reload();
+});
 
 // ── Tabs ──
 document.querySelectorAll('.admin-tab').forEach(tab => {
@@ -172,6 +191,22 @@ function renderSignups(rows) {
 }
 
 // ── Paintings ──
+const PAINTING_NAMES = {
+  IMG_3303: 'Canopy',
+  IMG_3304: 'Plumage',
+  IMG_3305: 'Still Waters',
+  IMG_3306: 'Crimson',
+  IMG_3307: 'Deep Blue',
+  IMG_3308: 'Daisy Days',
+  IMG_3309: 'Little One',
+  IMG_3310: 'Jack',
+  IMG_3311: 'The Raven',
+  IMG_3312: 'Glide',
+  IMG_3313: 'Blood Moon Voyage I',
+  IMG_3314: 'Serpent',
+  IMG_3317: 'Blood Moon Voyage II',
+};
+
 function renderPaintings(views, likes) {
   const tbody   = document.getElementById('paintingsBody');
   const maxViews = Math.max(...views.map(r => r.count), 1);
@@ -179,7 +214,7 @@ function renderPaintings(views, likes) {
 
   tbody.innerHTML = views.map(r => {
     const barW = Math.round((r.count / maxViews) * 120);
-    const name  = r.painting.replace(/_/g, ' ');
+    const name  = PAINTING_NAMES[r.painting] || r.painting.replace(/_/g, ' ');
     return `
       <tr>
         <td>${esc(name)}</td>
@@ -250,4 +285,6 @@ function esc(str) {
 }
 
 // ── Init ──
-if (isLoggedIn()) showDashboard();
+sb.auth.getSession().then(({ data }) => {
+  if (data.session) showDashboard();
+});
