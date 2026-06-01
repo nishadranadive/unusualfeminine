@@ -208,7 +208,7 @@ const PAINTING_NAMES = {
   'painting-seagull': 'Harbourside',
   'painting-robin': 'Little Robin',
   'painting-cabin': 'Sanctuary',
-  'painting-road': 'The Long Road',
+  'painting-road': 'Road to Rainier',
   'painting-eagle': 'Sovereign',
   'painting-ginkgo': 'Ginkgo',
   'painting-tropical': 'Tropical',
