@@ -88,19 +88,21 @@ function fmtDate(iso) {
 
 // ── Load all data ──
 async function loadAll() {
-  const [commRes, msgRes, signRes, viewRes, likeRes] = await Promise.all([
+  const [commRes, msgRes, signRes, viewRes, likeRes, paintRes] = await Promise.all([
     sb.from('commissions').select('*').order('created_at', { ascending: false }),
     sb.from('messages').select('*').order('created_at', { ascending: false }),
     sb.from('signups').select('*').order('created_at', { ascending: false }),
     sb.from('views').select('painting, count').order('count', { ascending: false }),
     sb.from('likes').select('painting, count'),
+    sb.from('paintings').select('*').order('sort_order', { ascending: true }),
   ]);
 
   const commissions = commRes.data || [];
   const messages    = msgRes.data  || [];
   const signups     = signRes.data || [];
-  const views       = viewRes.data || [];
-  const likes       = likeRes.data || [];
+  const views       = viewRes.data   || [];
+  const likes       = likeRes.data   || [];
+  const paintings   = paintRes.data  || [];
 
   // Stats
   const totalViews = views.reduce((s, r) => s + (r.count || 0), 0);
@@ -120,7 +122,7 @@ async function loadAll() {
   renderCommissions(commissions);
   renderMessages(messages);
   renderSignups(signups);
-  renderPaintings(views, likes);
+  renderPaintingsAdmin(paintings, views, likes);
 }
 
 function setBadge(id, count) {
@@ -190,55 +192,170 @@ function renderSignups(rows) {
   `).join('');
 }
 
-// ── Paintings ──
-const PAINTING_NAMES = {
-  IMG_3303: 'Canopy',
-  IMG_3304: 'Plumage',
-  IMG_3305: 'Still Waters',
-  IMG_3306: 'Crimson',
-  IMG_3307: 'Deep Blue',
-  IMG_3308: 'Daisy Days',
-  IMG_3309: 'Little One',
-  IMG_3310: 'Jack',
-  IMG_3311: 'The Raven',
-  IMG_3312: 'Glide',
-  IMG_3313: 'Blood Moon Voyage I',
-  IMG_3314: 'Serpent',
-  IMG_3317: 'Blood Moon Voyage II',
-  'painting-seagull': 'Harbourside',
-  'painting-robin': 'Little Robin',
-  'painting-cabin': 'Sanctuary',
-  'painting-road': 'Road to Rainier',
-  'painting-eagle': 'Sovereign',
-  'painting-ginkgo': 'Ginkgo',
-  'painting-tropical': 'Tropical',
-  'painting-canopy-summer': 'Summer Canopy',
-  'painting-rooster': 'The Cockerel',
-  'painting-plumeria': 'Plumeria',
-};
+// ── Paintings admin ──
+let allPaintings = [];
 
-function renderPaintings(views, likes) {
-  const tbody   = document.getElementById('paintingsBody');
-  const maxViews = Math.max(...views.map(r => r.count), 1);
-  const likeMap  = Object.fromEntries(likes.map(r => [r.painting, r.count]));
+function renderPaintingsAdmin(paintings, views, likes) {
+  allPaintings = paintings;
+  const grid   = document.getElementById('paintingsGrid');
+  const likeMap = Object.fromEntries(likes.map(r => [r.painting, r.count]));
+  const viewMap = Object.fromEntries(views.map(r => [r.painting, r.count]));
 
-  tbody.innerHTML = views.map(r => {
-    const barW = Math.round((r.count / maxViews) * 120);
-    const name  = PAINTING_NAMES[r.painting] || r.painting.replace(/_/g, ' ');
-    return `
-      <tr>
-        <td>${esc(name)}</td>
-        <td>
-          <div class="bar-wrap">
-            <div class="bar" style="width:${barW}px"></div>
-            <span>${r.count}</span>
-          </div>
-        </td>
-        <td>${likeMap[r.painting] || 0} ♥</td>
-      </tr>
-    `;
-  }).join('');
+  grid.innerHTML = paintings.map((p, i) => `
+    <div class="pa-card" data-index="${i}">
+      <img src="${p.image_url || 'images/' + p.filename}" alt="${esc(p.title)}" />
+      <div class="pa-card-info">
+        <div class="pa-card-title">${esc(p.title)}</div>
+        <div class="pa-card-status ${p.status}">${p.status === 'sold' ? 'Sold' : 'Available'}</div>
+      </div>
+    </div>
+  `).join('');
+
+  grid.querySelectorAll('.pa-card').forEach((card, i) => {
+    card.addEventListener('click', () => openPaintingModal(paintings[i]));
+  });
 }
+
+// ── Painting modal ──
+let currentPainting = null;
+
+function openPaintingModal(painting) {
+  currentPainting = painting;
+  const modal = document.getElementById('paintingModal');
+
+  document.getElementById('paintingModalTitle').textContent = painting ? 'Edit Painting' : 'Add Painting';
+  document.getElementById('pmPreviewImg').src   = painting ? (painting.image_url || 'images/' + painting.filename) : '';
+  document.getElementById('pmTitle').value       = painting?.title       || '';
+  document.getElementById('pmMedium').value      = painting?.medium      || 'Acrylic on canvas';
+  document.getElementById('pmYear').value        = painting?.year        || 2025;
+  document.getElementById('pmStatus').value      = painting?.status      || 'available';
+  document.getElementById('pmDescription').value = painting?.description || '';
+  document.getElementById('pmSaveStatus').hidden = true;
+  document.getElementById('pmUploadStatus').hidden = true;
+  document.getElementById('pmImageFile').value   = '';
+  document.getElementById('pmDeleteBtn').hidden  = !painting;
+
+  modal.hidden = false;
+}
+
+function closePaintingModal() {
+  document.getElementById('paintingModal').hidden = true;
+  currentPainting = null;
+}
+
+document.getElementById('paintingModalClose').addEventListener('click', closePaintingModal);
+document.getElementById('paintingModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('paintingModal')) closePaintingModal();
+});
+
+// Compute SHA-256 hash of file content for duplicate detection
+async function computeFileHash(file) {
+  const buffer = await file.arrayBuffer();
+  const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+  return Array.from(new Uint8Array(hashBuffer))
+    .map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 16);
+}
+
+// Image preview on file select + duplicate check
+document.getElementById('pmImageFile').addEventListener('change', async e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  document.getElementById('pmPreviewImg').src = URL.createObjectURL(file);
+
+  const dupWarn = document.getElementById('pmDupWarning');
+  dupWarn.hidden = true;
+  e.target.dataset.hash = '';
+
+  const hash = await computeFileHash(file);
+  e.target.dataset.hash = hash;
+
+  const ext = file.name.split('.').pop().toLowerCase();
+  const { data: files } = await sb.storage.from('paintings').list('', { search: hash });
+  if (files?.some(f => f.name === `${hash}.${ext}`)) {
+    dupWarn.hidden = false;
+  }
+});
+
+// Save painting
+document.getElementById('pmSaveBtn').addEventListener('click', async () => {
+  const btn      = document.getElementById('pmSaveBtn');
+  const statusEl = document.getElementById('pmSaveStatus');
+  const file     = document.getElementById('pmImageFile').files[0];
+
+  btn.disabled    = true;
+  btn.textContent = 'Saving...';
+  statusEl.hidden = true;
+
+  let imageUrl = currentPainting?.image_url || null;
+
+  // Upload new image if selected
+  if (file) {
+    const ext      = file.name.split('.').pop().toLowerCase();
+    const hash     = document.getElementById('pmImageFile').dataset.hash || Date.now().toString(16);
+    const filename = `${hash}.${ext}`;
+    const uploadStatus = document.getElementById('pmUploadStatus');
+
+    uploadStatus.textContent = 'Uploading image...';
+    uploadStatus.hidden = false;
+
+    const { error: upErr } = await sb.storage.from('paintings').upload(filename, file, { upsert: true });
+
+    if (upErr) {
+      uploadStatus.textContent = 'Image upload failed.';
+      btn.disabled    = false;
+      btn.textContent = 'Save Changes';
+      return;
+    }
+
+    const { data: { publicUrl } } = sb.storage.from('paintings').getPublicUrl(filename);
+    imageUrl = publicUrl;
+    uploadStatus.textContent = 'Image uploaded.';
+  }
+
+  const payload = {
+    title:       document.getElementById('pmTitle').value.trim(),
+    medium:      document.getElementById('pmMedium').value.trim(),
+    year:        parseInt(document.getElementById('pmYear').value),
+    status:      document.getElementById('pmStatus').value,
+    description: document.getElementById('pmDescription').value.trim(),
+    image_url:   imageUrl,
+  };
+
+  let err;
+  if (currentPainting) {
+    ({ error: err } = await sb.from('paintings').update(payload).eq('id', currentPainting.id));
+  } else {
+    const filename = `new-${Date.now()}`;
+    ({ error: err } = await sb.from('paintings').insert({ ...payload, filename, sort_order: allPaintings.length + 1 }));
+  }
+
+  if (err) {
+    statusEl.textContent = 'Error saving. Try again.';
+    statusEl.style.color = '#b71c1c';
+  } else {
+    statusEl.textContent = 'Saved!';
+    statusEl.style.color = '#2e7d32';
+    setTimeout(closePaintingModal, 800);
+    loadAll();
+  }
+
+  statusEl.hidden = false;
+  btn.disabled    = false;
+  btn.textContent = 'Save Changes';
+});
+
+// Delete painting
+document.getElementById('pmDeleteBtn').addEventListener('click', async () => {
+  if (!currentPainting) return;
+  if (!confirm(`Delete "${currentPainting.title}"? This cannot be undone.`)) return;
+
+  await sb.from('paintings').delete().eq('id', currentPainting.id);
+  closePaintingModal();
+  loadAll();
+});
+
+// Add new painting
+document.getElementById('addPaintingBtn').addEventListener('click', () => openPaintingModal(null));
 
 // ── Detail modal ──
 function openDetail(type, row) {

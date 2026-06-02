@@ -114,16 +114,11 @@
 
       <!-- PAINTINGS -->
       <div id="tabPaintings" class="tab-panel" hidden>
-        <table class="admin-table">
-          <thead>
-            <tr>
-              <th>Painting</th>
-              <th>Views</th>
-              <th>Likes</th>
-            </tr>
-          </thead>
-          <tbody id="paintingsBody"></tbody>
-        </table>
+        <div class="paintings-toolbar">
+          <p class="paintings-hint">Click a painting to edit its details.</p>
+          <button id="addPaintingBtn" class="btn-add">+ Add New Painting</button>
+        </div>
+        <div id="paintingsGrid" class="paintings-admin-grid"></div>
       </div>
 
     </div>
@@ -134,6 +129,55 @@
     <div class="detail-box">
       <button class="detail-close">&times;</button>
       <div id="detailContent"></div>
+    </div>
+  </div>
+
+  <!-- PAINTING EDIT MODAL -->
+  <div id="paintingModal" class="detail-modal" hidden>
+    <div class="detail-box painting-modal-box">
+      <button class="detail-close" id="paintingModalClose">&times;</button>
+      <h3 id="paintingModalTitle">Edit Painting</h3>
+
+      <div class="painting-modal-preview">
+        <img id="pmPreviewImg" src="" alt="" />
+        <label class="upload-label">
+          <input type="file" id="pmImageFile" accept="image/*" />
+          Change Image
+        </label>
+        <p id="pmUploadStatus" hidden></p>
+        <p id="pmDupWarning" class="dup-warning" hidden>⚠️ This image is already uploaded — it won't be duplicated in storage.</p>
+      </div>
+
+      <div class="painting-modal-fields">
+        <div class="pm-field">
+          <label>Title</label>
+          <input type="text" id="pmTitle" />
+        </div>
+        <div class="pm-field">
+          <label>Medium</label>
+          <input type="text" id="pmMedium" />
+        </div>
+        <div class="pm-field">
+          <label>Year</label>
+          <input type="number" id="pmYear" min="2000" max="2100" />
+        </div>
+        <div class="pm-field">
+          <label>Status</label>
+          <select id="pmStatus">
+            <option value="available">Available</option>
+            <option value="sold">Sold</option>
+          </select>
+        </div>
+        <div class="pm-field">
+          <label>Description</label>
+          <textarea id="pmDescription" rows="4"></textarea>
+        </div>
+        <div class="pm-actions">
+          <button id="pmSaveBtn" class="btn-save">Save Changes</button>
+          <button id="pmDeleteBtn" class="btn-delete">Delete Painting</button>
+        </div>
+        <p id="pmSaveStatus" hidden></p>
+      </div>
     </div>
   </div>
 

@@ -297,8 +297,66 @@ document.getElementById('contactForm').addEventListener('submit', async e => {
   btn.textContent = 'Send Message';
 });
 
+// ── Load paintings from Supabase ──
+async function loadPaintings() {
+  const { data, error } = await sb
+    .from('paintings')
+    .select('*')
+    .order('sort_order', { ascending: true });
+
+  if (error || !data) return;
+
+  const grid = document.getElementById('galleryGrid');
+  grid.innerHTML = '';
+
+  data.forEach(p => {
+    const div = document.createElement('div');
+    div.className = 'gallery-item';
+    div.dataset.category    = p.category    || 'acrylic';
+    div.dataset.order       = p.sort_order  || 0;
+    div.dataset.title       = p.title       || '';
+    div.dataset.medium      = p.medium      || '';
+    div.dataset.year        = p.year        || '';
+    div.dataset.description = p.description || '';
+    div.dataset.status      = p.status      || 'available';
+    div.dataset.paintingId  = p.id;
+
+    div.innerHTML = `
+      <img src="${p.image_url || 'images/' + p.filename}" alt="${p.title}" loading="lazy" />
+      <div class="item-hover"><span>View</span></div>
+    `;
+    grid.appendChild(div);
+  });
+
+  sortGallery('newest');
+  loadLikes();
+  loadViews();
+}
+
+// ── Email signup ──
+document.getElementById('signupForm')?.addEventListener('submit', async e => {
+  e.preventDefault();
+  const form    = e.target;
+  const success = form.parentElement.querySelector('.signup-success');
+  const btn     = form.querySelector('button');
+
+  btn.disabled    = true;
+  btn.textContent = '...';
+
+  const { error } = await sb.from('signups').insert({ email: form.email.value.trim() });
+
+  if (!error) {
+    success.hidden = false;
+    form.hidden    = true;
+  } else if (error.code === '23505') {
+    success.hidden = false;
+    success.textContent = 'You are already subscribed!';
+    form.hidden = true;
+  }
+
+  btn.disabled    = false;
+  btn.textContent = 'Subscribe';
+});
+
 // ── Init ──
-sortGallery('newest');
-applyPagination();
-loadLikes();
-loadViews();
+try { loadPaintings(); } catch(e) { console.error('Init failed:', e); }

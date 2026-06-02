@@ -226,6 +226,15 @@ a { text-decoration: none; color: inherit; }
   color: var(--cream);
 }
 
+.gallery-loading {
+  column-span: all;
+  text-align: center;
+  padding: 4rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+  letter-spacing: 0.08em;
+}
+
 .tab.coming-soon {
   opacity: 0.4;
   cursor: not-allowed;
