@@ -190,10 +190,30 @@
         <p id="lbYear" class="lb-meta"></p>
         <p id="lbViews" class="lb-views"></p>
         <p id="lbDesc" class="lb-desc"></p>
-        <button class="lb-like-btn" id="lbLikeBtn" aria-label="Like this painting">
-          <span class="lb-like-heart">♡</span>
-          <span id="lbLikeCount">0</span>
-        </button>
+        <!-- Reactions -->
+        <div class="lb-reactions">
+          <button class="reaction-btn" data-reaction="love">♡ <span class="reaction-count" id="rcLove">0</span></button>
+          <button class="reaction-btn" data-reaction="wow">✦ <span class="reaction-count" id="rcWow">0</span></button>
+          <button class="reaction-btn" data-reaction="want">◎ <span class="reaction-count" id="rcWant">0</span></button>
+        </div>
+        <div class="reaction-labels">
+          <span>Love it</span><span>Stunning</span><span>Want it</span>
+        </div>
+
+        <!-- Wishlist -->
+        <div class="lb-wishlist" id="lbWishlist">
+          <p class="wishlist-label">Get notified about new work</p>
+          <div class="wishlist-form">
+            <input type="text" id="wishlistEmail" placeholder="your@email.com" autocomplete="off" />
+            <button id="wishlistBtn">Notify me</button>
+          </div>
+          <label class="wishlist-consent">
+            <input type="checkbox" id="wishlistConsent" />
+            I agree to receive occasional updates from Madhuja Gosavi
+          </label>
+          <p id="wishlistMsg" hidden></p>
+        </div>
+
         <a href="https://www.instagram.com/unusualfeminine" target="_blank" rel="noopener" class="btn-outline lb-cta">
           Enquire on Instagram
         </a>
@@ -201,7 +221,7 @@
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.106.2/dist/umd/supabase.js" integrity="sha384-m/8UHFJHeU6nrCKP2hBnAseuvAKUmLF+8e5bWos5CJL023vuxX7kiVL5t8yjsJhV" crossorigin="anonymous"></script>
   <script src="js/main.js"></script>
 </body>
 </html>

@@ -3,6 +3,13 @@ const SUPABASE_URL = 'https://djozmuyolvuzkcykoqhb.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_M5f5QO7e_PiAUGKLz5hUeQ_BrYyo1wl';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+// ── Escape HTML ──
+function esc(str) {
+  return String(str ?? '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
 // ── Likes ──
 const likeCounts   = {};
 const viewCounts   = {};
@@ -55,18 +62,17 @@ async function toggleLike(paintingId) {
   const btn = document.getElementById('lbLikeBtn');
   btn.disabled = true;
 
-  const liked    = getLiked();
-  const isLiked  = liked.includes(paintingId);
-  const newCount = isLiked
+  const liked   = getLiked();
+  const isLiked = liked.includes(paintingId);
+
+  likeCounts[paintingId] = isLiked
     ? Math.max(0, (likeCounts[paintingId] || 0) - 1)
     : (likeCounts[paintingId] || 0) + 1;
-
-  likeCounts[paintingId] = newCount;
   saveLiked(isLiked ? liked.filter(id => id !== paintingId) : [...liked, paintingId]);
   updateAllBadges();
   updateLightboxLike(paintingId);
 
-  await sb.from('likes').upsert({ painting: paintingId, count: newCount });
+  await sb.rpc(isLiked ? 'decrement_like' : 'increment_like', { painting_id: paintingId });
   likeInFlight.delete(paintingId);
   btn.disabled = false;
 }
@@ -76,7 +82,7 @@ async function incrementView(paintingId) {
   const current = (viewCounts[paintingId] || 0) + 1;
   viewCounts[paintingId] = current;
   document.getElementById('lbViews').textContent = current + ' views';
-  await sb.from('views').upsert({ painting: paintingId, count: current });
+  await sb.rpc('increment_view', { painting_id: paintingId });
 }
 
 // ── Nav scroll ──
@@ -236,6 +242,15 @@ document.getElementById('commissionChangeBtn').addEventListener('click', () => {
   document.getElementById('commissionStep1').scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 
+// ── Form rate limiting ──
+const formLastSubmit = {};
+function isRateLimited(key, cooldownMs = 60_000) {
+  const last = formLastSubmit[key] || 0;
+  if (Date.now() - last < cooldownMs) return true;
+  formLastSubmit[key] = Date.now();
+  return false;
+}
+
 // ── Commission form ──
 document.getElementById('commissionForm').addEventListener('submit', async e => {
   e.preventDefault();
@@ -243,6 +258,12 @@ document.getElementById('commissionForm').addEventListener('submit', async e => 
   const success = form.querySelector('.success');
   const error   = form.querySelector('.error');
   const btn     = form.querySelector('button[type=submit]');
+
+  if (isRateLimited('commission')) {
+    error.textContent = 'Please wait before submitting again.';
+    error.hidden = false;
+    return;
+  }
 
   btn.disabled = true;
   btn.textContent = 'Sending...';
@@ -274,6 +295,12 @@ document.getElementById('contactForm').addEventListener('submit', async e => {
   const success = form.querySelector('.success');
   const error   = form.querySelector('.error');
   const btn     = form.querySelector('button[type=submit]');
+
+  if (isRateLimited('contact')) {
+    error.textContent = 'Please wait before submitting again.';
+    error.hidden = false;
+    return;
+  }
 
   btn.disabled = true;
   btn.textContent = 'Sending...';
@@ -322,7 +349,7 @@ async function loadPaintings() {
     div.dataset.paintingId  = p.id;
 
     div.innerHTML = `
-      <img src="${p.image_url || 'images/' + p.filename}" alt="${p.title}" loading="lazy" />
+      <img src="${esc(p.image_url || 'images/' + p.filename)}" alt="${esc(p.title)}" loading="lazy" />
       <div class="item-hover"><span>View</span></div>
     `;
     grid.appendChild(div);
@@ -339,6 +366,8 @@ document.getElementById('signupForm')?.addEventListener('submit', async e => {
   const form    = e.target;
   const success = form.parentElement.querySelector('.signup-success');
   const btn     = form.querySelector('button');
+
+  if (isRateLimited('signup')) return;
 
   btn.disabled    = true;
   btn.textContent = '...';
