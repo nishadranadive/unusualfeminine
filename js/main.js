@@ -201,6 +201,7 @@ function openLightbox(index) {
   lightbox.setAttribute('aria-hidden', 'false');
   document.body.style.overflow = 'hidden';
   incrementView(currentPaintingId);
+  loadReactions(currentPaintingId);
 }
 
 function closeLightbox() {
@@ -209,8 +210,71 @@ function closeLightbox() {
   document.body.style.overflow = '';
 }
 
-function showNext() { current = (current + 1) % items.length; populateLightbox(current); }
-function showPrev() { current = (current - 1 + items.length) % items.length; populateLightbox(current); }
+function showNext() { current = (current + 1) % items.length; populateLightbox(current); loadReactions(currentPaintingId); }
+function showPrev() { current = (current - 1 + items.length) % items.length; populateLightbox(current); loadReactions(currentPaintingId); }
+
+// ── Reactions ──
+const reactionCounts = {};
+const REACTED_KEY    = 'uf_reacted';
+
+function getReacted() { return JSON.parse(localStorage.getItem(REACTED_KEY) || '{}'); }
+function saveReacted(obj) { localStorage.setItem(REACTED_KEY, JSON.stringify(obj)); }
+function rkey(paintingId, type) { return `${paintingId}:${type}`; }
+
+async function loadReactions(paintingId) {
+  const keys = ['love','wow','want'].map(t => rkey(paintingId, t));
+  const { data } = await sb.from('likes').select('painting,count').in('painting', keys);
+  if (data) data.forEach(r => { reactionCounts[r.painting] = r.count; });
+  updateReactionDisplay(paintingId);
+}
+
+function updateReactionDisplay(paintingId) {
+  const reacted = getReacted();
+  [['love','rcLove'],['wow','rcWow'],['want','rcWant']].forEach(([type, id]) => {
+    const key     = rkey(paintingId, type);
+    const countEl = document.getElementById(id);
+    const btn     = countEl?.closest('.reaction-btn');
+    if (countEl) countEl.textContent = reactionCounts[key] || 0;
+    if (btn) btn.classList.toggle('reacted', !!reacted[key]);
+  });
+}
+
+async function toggleReaction(paintingId, type) {
+  const key      = rkey(paintingId, type);
+  const reacted  = getReacted();
+  const wasOn    = !!reacted[key];
+  reactionCounts[key] = wasOn ? Math.max(0, (reactionCounts[key] || 0) - 1) : (reactionCounts[key] || 0) + 1;
+  if (wasOn) delete reacted[key]; else reacted[key] = true;
+  saveReacted(reacted);
+  updateReactionDisplay(paintingId);
+  await sb.rpc(wasOn ? 'decrement_like' : 'increment_like', { painting_id: key });
+}
+
+document.querySelectorAll('.reaction-btn').forEach(btn => {
+  btn.addEventListener('click', () => toggleReaction(currentPaintingId, btn.dataset.reaction));
+});
+
+// ── Wishlist ──
+document.getElementById('wishlistBtn').addEventListener('click', async () => {
+  const email   = document.getElementById('wishlistEmail').value.trim();
+  const consent = document.getElementById('wishlistConsent').checked;
+  const msg     = document.getElementById('wishlistMsg');
+
+  if (!consent) { msg.textContent = 'Please check the consent box.'; msg.hidden = false; return; }
+  if (!email)   { msg.textContent = 'Please enter your email.';      msg.hidden = false; return; }
+
+  const { error } = await sb.from('signups').insert({ email });
+  msg.hidden = false;
+  if (error?.code === '23505') {
+    msg.textContent = "You're already subscribed!";
+  } else if (error) {
+    msg.textContent = 'Something went wrong. Try again.';
+  } else {
+    msg.textContent = "You're on the list!";
+    document.getElementById('wishlistEmail').value = '';
+    document.getElementById('wishlistConsent').checked = false;
+  }
+});
 
 lbLikeBtn?.addEventListener('click', () => toggleLike(currentPaintingId));
 document.querySelector('.lb-close').addEventListener('click', closeLightbox);
