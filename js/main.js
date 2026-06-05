@@ -328,12 +328,19 @@ document.getElementById('contactForm').addEventListener('submit', async e => {
 
 // ── Load paintings from Supabase ──
 async function loadPaintings() {
-  const { data, error } = await sb
+  let { data, error } = await sb
     .from('paintings')
     .select('*')
     .order('sort_order', { ascending: true });
 
-  if (error || !data) return;
+  if (error || !data?.length) {
+    try {
+      const res = await fetch('data/paintings.json');
+      data = await res.json();
+    } catch (e) { return; }
+  }
+
+  if (!data?.length) return;
 
   const grid = document.getElementById('galleryGrid');
   grid.innerHTML = '';
