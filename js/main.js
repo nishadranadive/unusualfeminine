@@ -251,7 +251,10 @@ async function toggleReaction(paintingId, type) {
 }
 
 document.querySelectorAll('.reaction-btn').forEach(btn => {
-  btn.addEventListener('click', () => toggleReaction(currentPaintingId, btn.dataset.reaction));
+  btn.addEventListener('click', () => {
+    if (isRateLimited('reaction', 2_000)) return;
+    toggleReaction(currentPaintingId, btn.dataset.reaction);
+  });
 });
 
 // ── Wishlist ──
@@ -262,6 +265,9 @@ document.getElementById('wishlistBtn').addEventListener('click', async () => {
 
   if (!consent) { msg.textContent = 'Please check the consent box.'; msg.hidden = false; return; }
   if (!email)   { msg.textContent = 'Please enter your email.';      msg.hidden = false; return; }
+  if (isRateLimited('wishlist', 60_000)) {
+    msg.textContent = 'Please wait before submitting again.'; msg.hidden = false; return;
+  }
 
   const { error } = await sb.from('signups').insert({ email });
   msg.hidden = false;
@@ -308,12 +314,12 @@ document.getElementById('commissionChangeBtn').addEventListener('click', () => {
   document.getElementById('commissionStep1').scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 
-// ── Form rate limiting ──
-const formLastSubmit = {};
+// ── Form rate limiting (persists across reloads via localStorage) ──
 function isRateLimited(key, cooldownMs = 60_000) {
-  const last = formLastSubmit[key] || 0;
+  const storageKey = 'uf_rl_' + key;
+  const last = parseInt(localStorage.getItem(storageKey) || '0');
   if (Date.now() - last < cooldownMs) return true;
-  formLastSubmit[key] = Date.now();
+  localStorage.setItem(storageKey, Date.now().toString());
   return false;
 }
 
