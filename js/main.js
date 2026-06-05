@@ -50,9 +50,11 @@ function updateLightboxLike(paintingId) {
   const count   = likeCounts[paintingId] || 0;
   const btn     = document.getElementById('lbLikeBtn');
   const countEl = document.getElementById('lbLikeCount');
-  btn.querySelector('.lb-like-heart').textContent = liked.includes(paintingId) ? '♥' : '♡';
-  btn.classList.toggle('liked', liked.includes(paintingId));
-  countEl.textContent = count;
+  if (btn) {
+    btn.querySelector('.lb-like-heart').textContent = liked.includes(paintingId) ? '♥' : '♡';
+    btn.classList.toggle('liked', liked.includes(paintingId));
+  }
+  if (countEl) countEl.textContent = count;
 }
 
 async function toggleLike(paintingId) {
@@ -60,7 +62,7 @@ async function toggleLike(paintingId) {
   likeInFlight.add(paintingId);
 
   const btn = document.getElementById('lbLikeBtn');
-  btn.disabled = true;
+  if (btn) btn.disabled = true;
 
   const liked   = getLiked();
   const isLiked = liked.includes(paintingId);
@@ -74,7 +76,7 @@ async function toggleLike(paintingId) {
 
   await sb.rpc(isLiked ? 'decrement_like' : 'increment_like', { painting_id: paintingId });
   likeInFlight.delete(paintingId);
-  btn.disabled = false;
+  if (btn) btn.disabled = false;
 }
 
 // ── View count ──
@@ -210,7 +212,7 @@ function closeLightbox() {
 function showNext() { current = (current + 1) % items.length; populateLightbox(current); }
 function showPrev() { current = (current - 1 + items.length) % items.length; populateLightbox(current); }
 
-lbLikeBtn.addEventListener('click', () => toggleLike(currentPaintingId));
+lbLikeBtn?.addEventListener('click', () => toggleLike(currentPaintingId));
 document.querySelector('.lb-close').addEventListener('click', closeLightbox);
 document.querySelector('.lb-next').addEventListener('click', showNext);
 document.querySelector('.lb-prev').addEventListener('click', showPrev);
