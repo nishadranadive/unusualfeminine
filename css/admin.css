@@ -423,6 +423,14 @@ body {
 .pa-card-status.available { color: #2e7d32; }
 .pa-card-status.sold      { color: #b71c1c; }
 
+.pa-card-stats {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+  font-size: 11px;
+  color: #888;
+}
+
 /* ── Painting edit modal ── */
 .painting-modal-box {
   max-width: 720px;

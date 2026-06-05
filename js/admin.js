@@ -197,19 +197,35 @@ let allPaintings = [];
 
 function renderPaintingsAdmin(paintings, views, likes) {
   allPaintings = paintings;
-  const grid   = document.getElementById('paintingsGrid');
-  const likeMap = Object.fromEntries(likes.map(r => [r.painting, r.count]));
+  const grid    = document.getElementById('paintingsGrid');
   const viewMap = Object.fromEntries(views.map(r => [r.painting, r.count]));
+  // Separate plain likes from reaction keys (reactions have a colon)
+  const likeMap     = Object.fromEntries(likes.filter(r => !r.painting.includes(':')).map(r => [r.painting, r.count]));
+  const reactionMap = Object.fromEntries(likes.filter(r =>  r.painting.includes(':')).map(r => [r.painting, r.count]));
 
-  grid.innerHTML = paintings.map((p, i) => `
+  function pid(p) { return (p.filename || '').replace(/\.[^.]+$/, ''); }
+
+  grid.innerHTML = paintings.map((p, i) => {
+    const id    = pid(p);
+    const views = viewMap[id]  || 0;
+    const love  = reactionMap[`${id}:love`] || 0;
+    const wow   = reactionMap[`${id}:wow`]  || 0;
+    const want  = reactionMap[`${id}:want`] || 0;
+    return `
     <div class="pa-card" data-index="${i}">
       <img src="${p.image_url || 'images/' + p.filename}" alt="${esc(p.title)}" />
       <div class="pa-card-info">
         <div class="pa-card-title">${esc(p.title)}</div>
         <div class="pa-card-status ${p.status}">${p.status === 'sold' ? 'Sold' : 'Available'}</div>
+        <div class="pa-card-stats">
+          <span title="Views">👁 ${views}</span>
+          <span title="Love it">♡ ${love}</span>
+          <span title="Stunning">✦ ${wow}</span>
+          <span title="Want it">◎ ${want}</span>
+        </div>
       </div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 
   grid.querySelectorAll('.pa-card').forEach((card, i) => {
     card.addEventListener('click', () => openPaintingModal(paintings[i]));
