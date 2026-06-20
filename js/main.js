@@ -1,7 +1,19 @@
-// ── Supabase ──
+// ── Supabase (forms only) ──
 const SUPABASE_URL = 'https://djozmuyolvuzkcykoqhb.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_M5f5QO7e_PiAUGKLz5hUeQ_BrYyo1wl';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ── Firebase (likes / views / reactions) ──
+firebase.initializeApp({
+  apiKey:            'AIzaSyDoF0suDnQiOL4t_gMu4n8PSWrp4tesgQM',
+  authDomain:        'unusualfeminine-7549a.firebaseapp.com',
+  projectId:         'unusualfeminine-7549a',
+  storageBucket:     'unusualfeminine-7549a.firebasestorage.app',
+  messagingSenderId: '429844049501',
+  appId:             '1:429844049501:web:8a45e0a0ed8af6d84167b4'
+});
+const db = firebase.firestore();
+const FV = firebase.firestore.FieldValue;
 
 // ── Escape HTML ──
 function esc(str) {
@@ -20,14 +32,14 @@ function getLiked() { return JSON.parse(localStorage.getItem(LIKED_KEY) || '[]')
 function saveLiked(arr) { localStorage.setItem(LIKED_KEY, JSON.stringify(arr)); }
 
 async function loadLikes() {
-  const { data } = await sb.from('likes').select('painting, count');
-  if (data) data.forEach(r => { likeCounts[r.painting] = r.count; });
+  const snap = await db.collection('likes').get();
+  snap.forEach(doc => { likeCounts[doc.id] = doc.data().count || 0; });
   updateAllBadges();
 }
 
 async function loadViews() {
-  const { data } = await sb.from('views').select('painting, count');
-  if (data) data.forEach(r => { viewCounts[r.painting] = r.count; });
+  const snap = await db.collection('views').get();
+  snap.forEach(doc => { viewCounts[doc.id] = doc.data().count || 0; });
 }
 
 function paintingIdFromItem(el) {
@@ -74,7 +86,9 @@ async function toggleLike(paintingId) {
   updateAllBadges();
   updateLightboxLike(paintingId);
 
-  await sb.rpc(isLiked ? 'decrement_like' : 'increment_like', { painting_id: paintingId });
+  await db.collection('likes').doc(paintingId).set(
+    { count: FV.increment(isLiked ? -1 : 1) }, { merge: true }
+  );
   likeInFlight.delete(paintingId);
   if (btn) btn.disabled = false;
 }
@@ -84,7 +98,9 @@ async function incrementView(paintingId) {
   const current = (viewCounts[paintingId] || 0) + 1;
   viewCounts[paintingId] = current;
   document.getElementById('lbViews').textContent = current + ' views';
-  await sb.rpc('increment_view', { painting_id: paintingId });
+  await db.collection('views').doc(paintingId).set(
+    { count: FV.increment(1) }, { merge: true }
+  );
 }
 
 // ── Nav scroll ──
@@ -223,8 +239,8 @@ function rkey(paintingId, type) { return `${paintingId}:${type}`; }
 
 async function loadReactions(paintingId) {
   const keys = ['love','wow','want'].map(t => rkey(paintingId, t));
-  const { data } = await sb.from('likes').select('painting,count').in('painting', keys);
-  if (data) data.forEach(r => { reactionCounts[r.painting] = r.count; });
+  const snaps = await Promise.all(keys.map(k => db.collection('reactions').doc(k).get()));
+  snaps.forEach((snap, i) => { reactionCounts[keys[i]] = snap.exists ? (snap.data().count || 0) : 0; });
   updateReactionDisplay(paintingId);
 }
 
@@ -247,7 +263,9 @@ async function toggleReaction(paintingId, type) {
   if (wasOn) delete reacted[key]; else reacted[key] = true;
   saveReacted(reacted);
   updateReactionDisplay(paintingId);
-  await sb.rpc(wasOn ? 'decrement_like' : 'increment_like', { painting_id: key });
+  await db.collection('reactions').doc(key).set(
+    { count: FV.increment(wasOn ? -1 : 1) }, { merge: true }
+  );
 }
 
 document.querySelectorAll('.reaction-btn').forEach(btn => {
@@ -428,7 +446,7 @@ async function loadPaintings() {
     div.dataset.year        = p.year        || '';
     div.dataset.description = p.description || '';
     div.dataset.status      = p.status      || 'available';
-    div.dataset.paintingId  = p.id;
+    div.dataset.paintingId  = p.id || (p.filename || '').split('.')[0];
 
     div.innerHTML = `
       <img src="${esc(p.image_url || 'images/' + p.filename)}" alt="${esc(p.title)}" loading="lazy" />
