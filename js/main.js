@@ -1,7 +1,18 @@
-// ── Supabase (forms only) ──
+// ── Supabase (paintings only) ──
 const SUPABASE_URL = 'https://djozmuyolvuzkcykoqhb.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_M5f5QO7e_PiAUGKLz5hUeQ_BrYyo1wl';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ── Web3Forms ──
+const W3F_KEY = 'b5d1a925-09bb-4700-a9f3-4b18a6529f43';
+async function w3fSubmit(fields) {
+  const res = await fetch('https://api.web3forms.com/submit', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ access_key: W3F_KEY, ...fields }),
+  });
+  return res.json();
+}
 
 // ── Firebase (likes / views / reactions) ──
 firebase.initializeApp({
@@ -287,16 +298,14 @@ document.getElementById('wishlistBtn').addEventListener('click', async () => {
     msg.textContent = 'Please wait before submitting again.'; msg.hidden = false; return;
   }
 
-  const { error } = await sb.from('signups').insert({ email });
+  const result = await w3fSubmit({ subject: 'Wishlist signup – unusualfeminine', email });
   msg.hidden = false;
-  if (error?.code === '23505') {
-    msg.textContent = "You're already subscribed!";
-  } else if (error) {
-    msg.textContent = 'Something went wrong. Try again.';
-  } else {
+  if (result.success) {
     msg.textContent = "You're on the list!";
     document.getElementById('wishlistEmail').value = '';
     document.getElementById('wishlistConsent').checked = false;
+  } else {
+    msg.textContent = 'Something went wrong. Try again.';
   }
 });
 
@@ -360,18 +369,19 @@ document.getElementById('commissionForm').addEventListener('submit', async e => 
   success.hidden = true;
   error.hidden   = true;
 
-  const { error: err } = await sb.from('commissions').insert({
+  const result = await w3fSubmit({
+    subject:     'Commission Request – unusualfeminine',
     name:        form.name.value.trim(),
     email:       form.email.value.trim(),
     type:        form.type.value,
     description: form.description.value.trim(),
   });
 
-  if (err) {
-    error.hidden = false;
-  } else {
+  if (result.success) {
     success.hidden = false;
     form.reset();
+  } else {
+    error.hidden = false;
   }
 
   btn.disabled = false;
@@ -397,17 +407,18 @@ document.getElementById('contactForm').addEventListener('submit', async e => {
   success.hidden = true;
   error.hidden   = true;
 
-  const { error: err } = await sb.from('messages').insert({
+  const result = await w3fSubmit({
+    subject: 'Message – unusualfeminine',
     name:    form.name.value.trim(),
     email:   form.email.value.trim(),
     message: form.message.value.trim(),
   });
 
-  if (err) {
-    error.hidden = false;
-  } else {
+  if (result.success) {
     success.hidden = false;
     form.reset();
+  } else {
+    error.hidden = false;
   }
 
   btn.disabled = false;
@@ -472,15 +483,14 @@ document.getElementById('signupForm')?.addEventListener('submit', async e => {
   btn.disabled    = true;
   btn.textContent = '...';
 
-  const { error } = await sb.from('signups').insert({ email: form.email.value.trim() });
+  const result = await w3fSubmit({ subject: 'Email signup – unusualfeminine', email: form.email.value.trim() });
 
-  if (!error) {
+  if (result.success) {
     success.hidden = false;
     form.hidden    = true;
-  } else if (error.code === '23505') {
+  } else {
     success.hidden = false;
-    success.textContent = 'You are already subscribed!';
-    form.hidden = true;
+    success.textContent = 'Something went wrong. Try again.';
   }
 
   btn.disabled    = false;
