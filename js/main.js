@@ -399,16 +399,18 @@ document.getElementById('contactForm').addEventListener('submit', async e => {
 // ── Load paintings from Supabase ──
 async function loadPaintings() {
   let data;
-  const { data: sbData, error } = await sb
-    .from('paintings')
-    .select('*')
-    .order('sort_order', { ascending: true });
+  try {
+    const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 4000));
+    const sbFetch = sb.from('paintings').select('*').order('sort_order', { ascending: true });
+    const { data: sbData, error } = await Promise.race([sbFetch, timeout]);
+    data = (!error && sbData?.length) ? sbData : null;
+  } catch (_) {
+    data = null;
+  }
 
-  if (error || !sbData?.length) {
+  if (!data) {
     const res = await fetch('data/paintings.json');
     data = await res.json();
-  } else {
-    data = sbData;
   }
 
   if (!data?.length) return;
