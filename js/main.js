@@ -398,12 +398,20 @@ document.getElementById('contactForm').addEventListener('submit', async e => {
 
 // ── Load paintings from Supabase ──
 async function loadPaintings() {
-  const { data, error } = await sb
+  let data;
+  const { data: sbData, error } = await sb
     .from('paintings')
     .select('*')
     .order('sort_order', { ascending: true });
 
-  if (error || !data?.length) return;
+  if (error || !sbData?.length) {
+    const res = await fetch('data/paintings.json');
+    data = await res.json();
+  } else {
+    data = sbData;
+  }
+
+  if (!data?.length) return;
 
   const grid = document.getElementById('galleryGrid');
   grid.innerHTML = '';
