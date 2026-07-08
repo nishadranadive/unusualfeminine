@@ -9,6 +9,7 @@ firebase.initializeApp({
 const auth    = firebase.auth();
 const db      = firebase.firestore();
 const storage = firebase.storage();
+const FV      = firebase.firestore.FieldValue;
 
 // ── Auth ──
 function showDashboard() {
@@ -55,8 +56,10 @@ function showDashboard() {
 
     try {
       await auth.signInWithEmailAndPassword(email, password);
+      logActivity('login_success', email, '');
       showDashboard();
     } catch (err) {
+      logActivity('login_failed', email, '');
       errEl.hidden    = false;
       btn.textContent = 'Enter';
       btn.disabled    = false;
@@ -252,12 +255,14 @@ document.getElementById('pmSaveBtn').addEventListener('click', async () => {
   try {
     if (currentPainting) {
       await db.collection('paintings').doc(currentPainting.id).set(payload, { merge: true });
+      logActivity('painting_update', auth.currentUser.email, payload.title);
     } else {
       const id = filename ? filename.replace(/\.[^.]+$/, '') : `painting-${Date.now()}`;
       await db.collection('paintings').doc(id).set({
         ...payload,
         sort_order: allPaintings.length + 1,
       });
+      logActivity('painting_create', auth.currentUser.email, payload.title);
     }
     statusEl.textContent = 'Saved!';
     statusEl.style.color = '#2e7d32';
@@ -278,7 +283,10 @@ document.getElementById('pmDeleteBtn').addEventListener('click', async () => {
   if (!currentPainting) return;
   if (!confirm(`Delete "${currentPainting.title}"? This cannot be undone.`)) return;
 
-  await db.collection('paintings').doc(currentPainting.id).delete();
+  const title = currentPainting.title;
+  const id    = currentPainting.id;
+  await db.collection('paintings').doc(id).delete();
+  logActivity('painting_delete', auth.currentUser.email, title);
   closePaintingModal();
   loadAll();
 });
@@ -306,6 +314,7 @@ document.getElementById('seedFirestoreBtn').addEventListener('click', async () =
     });
 
     await batch.commit();
+    logActivity('paintings_bulk_import', auth.currentUser.email, `${rows.length} paintings`);
     btn.textContent = 'Imported!';
     loadAll();
   } catch (err) {
@@ -321,6 +330,68 @@ function esc(str) {
     .replace(/&/g,'&amp;').replace(/</g,'&lt;')
     .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
+
+// ── Activity log ──
+async function logActivity(type, email, details) {
+  try {
+    await db.collection('audit_log').add({
+      type, email: email || '', details: details || '', timestamp: FV.serverTimestamp(),
+    });
+  } catch (err) {
+    console.error('logActivity failed:', err);
+  }
+}
+
+function fmtDate(ts) {
+  if (!ts) return '—';
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  return d.toLocaleString(undefined, {
+    year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+  });
+}
+
+function labelForType(type) {
+  return {
+    login_success:         'Login',
+    login_failed:          'Login Failed',
+    painting_create:       'Painting Added',
+    painting_update:       'Painting Edited',
+    painting_delete:       'Painting Deleted',
+    paintings_bulk_import: 'Bulk Import',
+  }[type] || type;
+}
+
+async function loadActivityLog() {
+  const tbody = document.getElementById('activityLogBody');
+  const snap = await db.collection('audit_log').orderBy('timestamp', 'desc').limit(100).get();
+
+  if (snap.empty) {
+    tbody.innerHTML = `<tr><td colspan="4" class="empty-msg">No activity yet.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = snap.docs.map(d => {
+    const e = d.data();
+    return `
+    <tr>
+      <td class="date-cell">${fmtDate(e.timestamp)}</td>
+      <td><span class="type-tag">${esc(labelForType(e.type))}</span></td>
+      <td>${esc(e.email)}</td>
+      <td>${esc(e.details)}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Tab switching ──
+document.querySelectorAll('.admin-tab').forEach(tabBtn => {
+  tabBtn.addEventListener('click', () => {
+    document.querySelectorAll('.admin-tab').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.hidden = true);
+    tabBtn.classList.add('active');
+    document.getElementById(tabBtn.dataset.tab).hidden = false;
+    if (tabBtn.dataset.tab === 'tabActivityLog') loadActivityLog();
+  });
+});
 
 // ── Init ──
 auth.onAuthStateChanged(user => {

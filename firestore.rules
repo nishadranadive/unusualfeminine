@@ -21,5 +21,34 @@ service cloud.firestore {
       allow read: if true;
       allow write: if request.auth != null;
     }
+
+    // Audit log — append-only. Reads and most writes require the admin
+    // session; a narrowly-shaped unauthenticated create is allowed only
+    // for login_failed (the one event that happens before auth exists).
+    match /audit_log/{docId} {
+      allow read: if request.auth != null;
+
+      allow create: if request.auth != null
+                    && request.resource.data.keys().hasOnly(['type','email','details','timestamp'])
+                    && request.resource.data.type in
+                       ['login_success','painting_create','painting_update','painting_delete','paintings_bulk_import']
+                    && request.resource.data.email is string
+                    && request.resource.data.email.size() < 200
+                    && request.resource.data.details is string
+                    && request.resource.data.details.size() < 500
+                    && request.resource.data.timestamp == request.time;
+
+      allow create: if request.auth == null
+                    && request.resource.data.keys().hasOnly(['type','email','details','timestamp'])
+                    && request.resource.data.type == 'login_failed'
+                    && request.resource.data.email is string
+                    && request.resource.data.email.size() < 200
+                    && request.resource.data.details is string
+                    && request.resource.data.details.size() < 500
+                    && request.resource.data.timestamp == request.time;
+
+      allow update: if false;
+      allow delete: if false;
+    }
   }
 }

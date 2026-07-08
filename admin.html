@@ -41,6 +41,16 @@
         <span id="statLikes">—</span>
         <label>Total Likes</label>
       </div>
+      <div class="stat-card">
+        <span id="statLogEntries">—</span>
+        <label>Log Entries</label>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tab-bar">
+      <button class="admin-tab active" data-tab="tabPaintings">Paintings</button>
+      <button class="admin-tab" data-tab="tabActivityLog">Activity Log</button>
     </div>
 
     <!-- TAB CONTENT -->
@@ -56,6 +66,23 @@
           </div>
         </div>
         <div id="paintingsGrid" class="paintings-admin-grid"></div>
+      </div>
+
+      <!-- ACTIVITY LOG -->
+      <div id="tabActivityLog" class="tab-panel" hidden>
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Action</th>
+              <th>Admin / Email</th>
+              <th>Details</th>
+            </tr>
+          </thead>
+          <tbody id="activityLogBody">
+            <tr><td colspan="4" class="empty-msg">Loading…</td></tr>
+          </tbody>
+        </table>
       </div>
 
     </div>
