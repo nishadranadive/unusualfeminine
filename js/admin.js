@@ -1,6 +1,14 @@
-const SUPABASE_URL = 'https://djozmuyolvuzkcykoqhb.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_M5f5QO7e_PiAUGKLz5hUeQ_BrYyo1wl';
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+firebase.initializeApp({
+  apiKey:            'AIzaSyDoF0suDnQiOL4t_gMu4n8PSWrp4tesgQM',
+  authDomain:        'unusualfeminine-7549a.firebaseapp.com',
+  projectId:         'unusualfeminine-7549a',
+  storageBucket:     'unusualfeminine-7549a.firebasestorage.app',
+  messagingSenderId: '429844049501',
+  appId:             '1:429844049501:web:8a45e0a0ed8af6d84167b4'
+});
+const auth    = firebase.auth();
+const db      = firebase.firestore();
+const storage = firebase.storage();
 
 // ── Auth ──
 function showDashboard() {
@@ -45,16 +53,15 @@ function showDashboard() {
     btn.disabled    = true;
     errEl.hidden    = true;
 
-    const { error } = await sb.auth.signInWithPassword({ email, password });
-
-    if (error) {
+    try {
+      await auth.signInWithEmailAndPassword(email, password);
+      showDashboard();
+    } catch (err) {
       errEl.hidden    = false;
       btn.textContent = 'Enter';
       btn.disabled    = false;
       passEl.value    = '';
       passEl.focus();
-    } else {
-      showDashboard();
     }
   }
 
@@ -64,150 +71,54 @@ function showDashboard() {
 })();
 
 document.getElementById('logoutBtn').addEventListener('click', async () => {
-  await sb.auth.signOut();
+  await auth.signOut();
   location.reload();
 });
 
-// ── Tabs ──
-document.querySelectorAll('.admin-tab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.tab-panel').forEach(p => p.hidden = true);
-    tab.classList.add('active');
-    document.getElementById('tab' + cap(tab.dataset.tab)).hidden = false;
-  });
-});
-
-function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
-
-function fmtDate(iso) {
-  if (!iso) return '';
-  const d = new Date(iso);
-  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-}
-
 // ── Load all data ──
 async function loadAll() {
-  const [commRes, msgRes, signRes, viewRes, likeRes, paintRes] = await Promise.all([
-    sb.from('commissions').select('*').order('created_at', { ascending: false }),
-    sb.from('messages').select('*').order('created_at', { ascending: false }),
-    sb.from('signups').select('*').order('created_at', { ascending: false }),
-    sb.from('views').select('painting, count').order('count', { ascending: false }),
-    sb.from('likes').select('painting, count'),
-    sb.from('paintings').select('*').order('sort_order', { ascending: true }),
+  const [paintSnap, viewSnap, likeSnap] = await Promise.all([
+    db.collection('paintings').orderBy('sort_order', 'asc').get(),
+    db.collection('views').get(),
+    db.collection('likes').get(),
   ]);
 
-  const commissions = commRes.data || [];
-  const messages    = msgRes.data  || [];
-  const signups     = signRes.data || [];
-  const views       = viewRes.data   || [];
-  const likes       = likeRes.data   || [];
-  const paintings   = paintRes.data  || [];
+  const paintings = paintSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+  const views     = {};
+  viewSnap.forEach(d  => { views[d.id]  = d.data().count || 0; });
+  const likes     = {};
+  likeSnap.forEach(d  => { likes[d.id]  = d.data().count || 0; });
 
-  // Stats
-  const totalViews = views.reduce((s, r) => s + (r.count || 0), 0);
-  const unseenComm = commissions.filter(r => !r.seen).length;
-  const unseenMsg  = messages.filter(r => !r.seen).length;
+  const totalViews = Object.values(views).reduce((s, c) => s + c, 0);
+  const totalLikes = Object.values(likes).reduce((s, c) => s + c, 0);
 
-  document.getElementById('statCommissions').textContent = commissions.length;
-  document.getElementById('statMessages').textContent    = messages.length;
-  document.getElementById('statSignups').textContent     = signups.length;
-  document.getElementById('statViews').textContent       = totalViews.toLocaleString();
+  document.getElementById('statPaintings').textContent = paintings.length;
+  document.getElementById('statViews').textContent     = totalViews.toLocaleString();
+  document.getElementById('statLikes').textContent     = totalLikes.toLocaleString();
 
-  // Badges
-  setBadge('badgeCommissions', unseenComm);
-  setBadge('badgeMessages',    unseenMsg);
-
-  // Tables
-  renderCommissions(commissions);
-  renderMessages(messages);
-  renderSignups(signups);
   renderPaintingsAdmin(paintings, views, likes);
-}
-
-function setBadge(id, count) {
-  const el = document.getElementById(id);
-  if (count > 0) { el.textContent = count; el.hidden = false; }
-  else { el.hidden = true; }
-}
-
-// ── Commissions ──
-function renderCommissions(rows) {
-  const tbody = document.getElementById('commissionsBody');
-  const empty = document.getElementById('emptyCommissions');
-
-  if (!rows.length) { empty.hidden = false; return; }
-
-  tbody.innerHTML = rows.map(r => `
-    <tr class="${r.seen ? '' : 'unseen'}" data-id="${r.id}" data-type="commission">
-      <td>${r.seen ? '' : '<span class="new-dot"></span>'}</td>
-      <td>${esc(r.name)}</td>
-      <td><a href="mailto:${esc(r.email)}">${esc(r.email)}</a></td>
-      <td><span class="type-tag">${r.type === 'pet' ? 'Pet Portrait' : 'Custom'}</span></td>
-      <td><span class="truncate">${esc(r.description || '')}</span></td>
-      <td>${esc(r.budget || '—')}</td>
-      <td class="date-cell">${fmtDate(r.created_at)}</td>
-    </tr>
-  `).join('');
-
-  tbody.querySelectorAll('tr').forEach((tr, i) => {
-    tr.addEventListener('click', () => openDetail('commission', rows[i]));
-  });
-}
-
-// ── Messages ──
-function renderMessages(rows) {
-  const tbody = document.getElementById('messagesBody');
-  const empty = document.getElementById('emptyMessages');
-
-  if (!rows.length) { empty.hidden = false; return; }
-
-  tbody.innerHTML = rows.map(r => `
-    <tr class="${r.seen ? '' : 'unseen'}" data-id="${r.id}">
-      <td>${r.seen ? '' : '<span class="new-dot"></span>'}</td>
-      <td>${esc(r.name)}</td>
-      <td><a href="mailto:${esc(r.email)}">${esc(r.email)}</a></td>
-      <td><span class="truncate">${esc(r.message)}</span></td>
-      <td class="date-cell">${fmtDate(r.created_at)}</td>
-    </tr>
-  `).join('');
-
-  tbody.querySelectorAll('tr').forEach((tr, i) => {
-    tr.addEventListener('click', () => openDetail('message', rows[i]));
-  });
-}
-
-// ── Signups ──
-function renderSignups(rows) {
-  const tbody = document.getElementById('signupsBody');
-  const empty = document.getElementById('emptySignups');
-
-  if (!rows.length) { empty.hidden = false; return; }
-
-  tbody.innerHTML = rows.map(r => `
-    <tr>
-      <td><a href="mailto:${esc(r.email)}">${esc(r.email)}</a></td>
-      <td class="date-cell">${fmtDate(r.created_at)}</td>
-    </tr>
-  `).join('');
 }
 
 // ── Paintings admin ──
 let allPaintings = [];
 
-function renderPaintingsAdmin(paintings, views, likes) {
-  allPaintings = paintings;
-  const grid    = document.getElementById('paintingsGrid');
-  const viewMap = Object.fromEntries(views.map(r => [r.painting, r.count]));
-  // Separate plain likes from reaction keys (reactions have a colon)
-  const likeMap     = Object.fromEntries(likes.filter(r => !r.painting.includes(':')).map(r => [r.painting, r.count]));
-  const reactionMap = Object.fromEntries(likes.filter(r =>  r.painting.includes(':')).map(r => [r.painting, r.count]));
+async function loadReactionCounts(paintingIds) {
+  const keys = [];
+  paintingIds.forEach(id => ['love', 'wow', 'want'].forEach(t => keys.push(`${id}:${t}`)));
+  const snaps = await Promise.all(keys.map(k => db.collection('reactions').doc(k).get()));
+  const map = {};
+  snaps.forEach((snap, i) => { map[keys[i]] = snap.exists ? (snap.data().count || 0) : 0; });
+  return map;
+}
 
-  function pid(p) { return (p.filename || '').replace(/\.[^.]+$/, ''); }
+async function renderPaintingsAdmin(paintings, views, likes) {
+  allPaintings = paintings;
+  const grid = document.getElementById('paintingsGrid');
+  const reactionMap = await loadReactionCounts(paintings.map(p => p.id));
 
   grid.innerHTML = paintings.map((p, i) => {
-    const id    = pid(p);
-    const views = viewMap[id]  || 0;
+    const id    = p.id;
+    const view  = views[id] || 0;
     const love  = reactionMap[`${id}:love`] || 0;
     const wow   = reactionMap[`${id}:wow`]  || 0;
     const want  = reactionMap[`${id}:want`] || 0;
@@ -218,7 +129,7 @@ function renderPaintingsAdmin(paintings, views, likes) {
         <div class="pa-card-title">${esc(p.title)}</div>
         <div class="pa-card-status ${p.status}">${p.status === 'sold' ? 'Sold' : 'Available'}</div>
         <div class="pa-card-stats">
-          <span title="Views">👁 ${views}</span>
+          <span title="Views">👁 ${view}</span>
           <span title="Love it">♡ ${love}</span>
           <span title="Stunning">✦ ${wow}</span>
           <span title="Want it">◎ ${want}</span>
@@ -286,8 +197,8 @@ document.getElementById('pmImageFile').addEventListener('change', async e => {
   e.target.dataset.hash = hash;
 
   const ext = file.name.split('.').pop().toLowerCase();
-  const { data: files } = await sb.storage.from('paintings').list('', { search: hash });
-  if (files?.some(f => f.name === `${hash}.${ext}`)) {
+  const { items } = await storage.ref('paintings').listAll();
+  if (items.some(item => item.name === `${hash}.${ext}`)) {
     dupWarn.hidden = false;
   }
 });
@@ -303,29 +214,29 @@ document.getElementById('pmSaveBtn').addEventListener('click', async () => {
   statusEl.hidden = true;
 
   let imageUrl = currentPainting?.image_url || null;
+  let filename = currentPainting?.filename  || null;
 
   // Upload new image if selected
   if (file) {
     const ext      = file.name.split('.').pop().toLowerCase();
     const hash     = document.getElementById('pmImageFile').dataset.hash || Date.now().toString(16);
-    const filename = `${hash}.${ext}`;
+    filename       = `${hash}.${ext}`;
     const uploadStatus = document.getElementById('pmUploadStatus');
 
     uploadStatus.textContent = 'Uploading image...';
     uploadStatus.hidden = false;
 
-    const { error: upErr } = await sb.storage.from('paintings').upload(filename, file, { upsert: true });
-
-    if (upErr) {
+    try {
+      const ref = storage.ref('paintings').child(filename);
+      await ref.put(file);
+      imageUrl = await ref.getDownloadURL();
+      uploadStatus.textContent = 'Image uploaded.';
+    } catch (err) {
       uploadStatus.textContent = 'Image upload failed.';
       btn.disabled    = false;
       btn.textContent = 'Save Changes';
       return;
     }
-
-    const { data: { publicUrl } } = sb.storage.from('paintings').getPublicUrl(filename);
-    imageUrl = publicUrl;
-    uploadStatus.textContent = 'Image uploaded.';
   }
 
   const payload = {
@@ -335,24 +246,26 @@ document.getElementById('pmSaveBtn').addEventListener('click', async () => {
     status:      document.getElementById('pmStatus').value,
     description: document.getElementById('pmDescription').value.trim(),
     image_url:   imageUrl,
+    filename:    filename,
   };
 
-  let err;
-  if (currentPainting) {
-    ({ error: err } = await sb.from('paintings').update(payload).eq('id', currentPainting.id));
-  } else {
-    const filename = `new-${Date.now()}`;
-    ({ error: err } = await sb.from('paintings').insert({ ...payload, filename, sort_order: allPaintings.length + 1 }));
-  }
-
-  if (err) {
-    statusEl.textContent = 'Error saving. Try again.';
-    statusEl.style.color = '#b71c1c';
-  } else {
+  try {
+    if (currentPainting) {
+      await db.collection('paintings').doc(currentPainting.id).set(payload, { merge: true });
+    } else {
+      const id = filename ? filename.replace(/\.[^.]+$/, '') : `painting-${Date.now()}`;
+      await db.collection('paintings').doc(id).set({
+        ...payload,
+        sort_order: allPaintings.length + 1,
+      });
+    }
     statusEl.textContent = 'Saved!';
     statusEl.style.color = '#2e7d32';
     setTimeout(closePaintingModal, 800);
     loadAll();
+  } catch (err) {
+    statusEl.textContent = 'Error saving. Try again.';
+    statusEl.style.color = '#b71c1c';
   }
 
   statusEl.hidden = false;
@@ -365,7 +278,7 @@ document.getElementById('pmDeleteBtn').addEventListener('click', async () => {
   if (!currentPainting) return;
   if (!confirm(`Delete "${currentPainting.title}"? This cannot be undone.`)) return;
 
-  await sb.from('paintings').delete().eq('id', currentPainting.id);
+  await db.collection('paintings').doc(currentPainting.id).delete();
   closePaintingModal();
   loadAll();
 });
@@ -373,51 +286,33 @@ document.getElementById('pmDeleteBtn').addEventListener('click', async () => {
 // Add new painting
 document.getElementById('addPaintingBtn').addEventListener('click', () => openPaintingModal(null));
 
-// ── Detail modal ──
-function openDetail(type, row) {
-  const content = document.getElementById('detailContent');
+// ── One-time migration: seed Firestore from data/paintings.json ──
+document.getElementById('seedFirestoreBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('seedFirestoreBtn');
+  if (!confirm('Import all paintings from data/paintings.json into Firestore? Existing docs with the same ID will be overwritten.')) return;
 
-  if (type === 'commission') {
-    content.innerHTML = `
-      <div class="detail-row"><label>Name</label><p>${esc(row.name)}</p></div>
-      <div class="detail-row"><label>Email</label><p><a href="mailto:${esc(row.email)}">${esc(row.email)}</a></p></div>
-      <div class="detail-row"><label>Type</label><p>${row.type === 'pet' ? 'Pet Portrait' : 'Custom Acrylic'}</p></div>
-      <div class="detail-row"><label>Description</label><p>${esc(row.description || '—')}</p></div>
-      <div class="detail-row"><label>Budget</label><p>${esc(row.budget || '—')}</p></div>
-      <div class="detail-row"><label>Date</label><p>${fmtDate(row.created_at)}</p></div>
-    `;
-  } else {
-    content.innerHTML = `
-      <div class="detail-row"><label>Name</label><p>${esc(row.name)}</p></div>
-      <div class="detail-row"><label>Email</label><p><a href="mailto:${esc(row.email)}">${esc(row.email)}</a></p></div>
-      <div class="detail-row"><label>Message</label><p>${esc(row.message)}</p></div>
-      <div class="detail-row"><label>Date</label><p>${fmtDate(row.created_at)}</p></div>
-    `;
+  btn.disabled    = true;
+  btn.textContent = 'Importing...';
+
+  try {
+    const res  = await fetch('data/paintings.json');
+    const rows = await res.json();
+    const batch = db.batch();
+
+    rows.forEach(p => {
+      const id  = (p.filename || '').replace(/\.[^.]+$/, '') || `painting-${p.sort_order}`;
+      const ref = db.collection('paintings').doc(id);
+      batch.set(ref, p, { merge: true });
+    });
+
+    await batch.commit();
+    btn.textContent = 'Imported!';
+    loadAll();
+  } catch (err) {
+    btn.textContent = 'Import failed';
   }
 
-  document.getElementById('detailModal').hidden = false;
-
-  // Mark as seen
-  if (!row.seen) {
-    const table = type === 'commission' ? 'commissions' : 'messages';
-    sb.from(table).update({ seen: true }).eq('id', row.id);
-    row.seen = true;
-    const tr = document.querySelector(`tr[data-id="${row.id}"]`);
-    if (tr) {
-      tr.classList.remove('unseen');
-      const dot = tr.querySelector('.new-dot');
-      if (dot) dot.remove();
-    }
-  }
-}
-
-document.querySelector('.detail-close').addEventListener('click', () => {
-  document.getElementById('detailModal').hidden = true;
-});
-
-document.getElementById('detailModal').addEventListener('click', e => {
-  if (e.target === document.getElementById('detailModal'))
-    document.getElementById('detailModal').hidden = true;
+  setTimeout(() => { btn.disabled = false; btn.textContent = 'Import from JSON (one-time)'; }, 1500);
 });
 
 // ── Escape HTML ──
@@ -428,6 +323,6 @@ function esc(str) {
 }
 
 // ── Init ──
-sb.auth.getSession().then(({ data }) => {
-  if (data.session) showDashboard();
+auth.onAuthStateChanged(user => {
+  if (user) showDashboard();
 });

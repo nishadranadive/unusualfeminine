@@ -1,8 +1,3 @@
-// ── Supabase (paintings only) ──
-const SUPABASE_URL = 'https://djozmuyolvuzkcykoqhb.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_M5f5QO7e_PiAUGKLz5hUeQ_BrYyo1wl';
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
 // ── Web3Forms ──
 const W3F_KEY = 'b5d1a925-09bb-4700-a9f3-4b18a6529f43';
 async function w3fSubmit(fields) {
@@ -425,14 +420,15 @@ document.getElementById('contactForm').addEventListener('submit', async e => {
   btn.textContent = 'Send Message';
 });
 
-// ── Load paintings from Supabase ──
+// ── Load paintings from Firestore ──
 async function loadPaintings() {
   let data;
   try {
     const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 4000));
-    const sbFetch = sb.from('paintings').select('*').order('sort_order', { ascending: true });
-    const { data: sbData, error } = await Promise.race([sbFetch, timeout]);
-    data = (!error && sbData?.length) ? sbData : null;
+    const fsFetch = db.collection('paintings').orderBy('sort_order', 'asc').get();
+    const snap = await Promise.race([fsFetch, timeout]);
+    const fsData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    data = fsData.length ? fsData : null;
   } catch (_) {
     data = null;
   }

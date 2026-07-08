@@ -1,0 +1,25 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Public site increments these anonymously — no auth required.
+    match /likes/{docId} {
+      allow read: if true;
+      allow write: if true;
+    }
+    match /views/{docId} {
+      allow read: if true;
+      allow write: if true;
+    }
+    match /reactions/{docId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Gallery content — public read, admin-only write.
+    match /paintings/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+  }
+}

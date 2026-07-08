@@ -30,105 +30,34 @@
     <!-- STATS -->
     <div class="stats-strip">
       <div class="stat-card">
-        <span id="statCommissions">—</span>
-        <label>Commissions</label>
-      </div>
-      <div class="stat-card">
-        <span id="statMessages">—</span>
-        <label>Messages</label>
-      </div>
-      <div class="stat-card">
-        <span id="statSignups">—</span>
-        <label>Signups</label>
+        <span id="statPaintings">—</span>
+        <label>Paintings</label>
       </div>
       <div class="stat-card">
         <span id="statViews">—</span>
         <label>Total Views</label>
       </div>
-    </div>
-
-    <!-- TABS -->
-    <div class="tab-bar">
-      <button class="admin-tab active" data-tab="commissions">
-        Commissions <span class="unseen-badge" id="badgeCommissions" hidden></span>
-      </button>
-      <button class="admin-tab" data-tab="messages">
-        Messages <span class="unseen-badge" id="badgeMessages" hidden></span>
-      </button>
-      <button class="admin-tab" data-tab="signups">Signups</button>
-      <button class="admin-tab" data-tab="paintings">Paintings</button>
+      <div class="stat-card">
+        <span id="statLikes">—</span>
+        <label>Total Likes</label>
+      </div>
     </div>
 
     <!-- TAB CONTENT -->
     <div class="tab-content">
 
-      <!-- COMMISSIONS -->
-      <div id="tabCommissions" class="tab-panel">
-        <table class="admin-table">
-          <thead>
-            <tr>
-              <th></th>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Type</th>
-              <th>Description</th>
-              <th>Budget</th>
-              <th>Date</th>
-            </tr>
-          </thead>
-          <tbody id="commissionsBody"></tbody>
-        </table>
-        <p class="empty-msg" id="emptyCommissions" hidden>No commission requests yet.</p>
-      </div>
-
-      <!-- MESSAGES -->
-      <div id="tabMessages" class="tab-panel" hidden>
-        <table class="admin-table">
-          <thead>
-            <tr>
-              <th></th>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Message</th>
-              <th>Date</th>
-            </tr>
-          </thead>
-          <tbody id="messagesBody"></tbody>
-        </table>
-        <p class="empty-msg" id="emptyMessages" hidden>No messages yet.</p>
-      </div>
-
-      <!-- SIGNUPS -->
-      <div id="tabSignups" class="tab-panel" hidden>
-        <table class="admin-table">
-          <thead>
-            <tr>
-              <th>Email</th>
-              <th>Date</th>
-            </tr>
-          </thead>
-          <tbody id="signupsBody"></tbody>
-        </table>
-        <p class="empty-msg" id="emptySignups" hidden>No signups yet.</p>
-      </div>
-
       <!-- PAINTINGS -->
-      <div id="tabPaintings" class="tab-panel" hidden>
+      <div id="tabPaintings" class="tab-panel">
         <div class="paintings-toolbar">
           <p class="paintings-hint">Click a painting to edit its details.</p>
-          <button id="addPaintingBtn" class="btn-add">+ Add New Painting</button>
+          <div>
+            <button id="seedFirestoreBtn" class="btn-add" style="background:none;border:1px solid var(--border);color:var(--muted);margin-right:0.5rem;">Import from JSON (one-time)</button>
+            <button id="addPaintingBtn" class="btn-add">+ Add New Painting</button>
+          </div>
         </div>
         <div id="paintingsGrid" class="paintings-admin-grid"></div>
       </div>
 
-    </div>
-  </div>
-
-  <!-- DETAIL MODAL -->
-  <div id="detailModal" class="detail-modal" hidden>
-    <div class="detail-box">
-      <button class="detail-close">&times;</button>
-      <div id="detailContent"></div>
     </div>
   </div>
 
@@ -181,7 +110,10 @@
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.106.2/dist/umd/supabase.js" integrity="sha384-m/8UHFJHeU6nrCKP2hBnAseuvAKUmLF+8e5bWos5CJL023vuxX7kiVL5t8yjsJhV" crossorigin="anonymous"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-storage-compat.js"></script>
   <script src="js/admin.js"></script>
 </body>
 </html>
