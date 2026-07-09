@@ -17,7 +17,72 @@ function showDashboard() {
   document.getElementById('loginScreen').hidden = true;
   document.getElementById('dashboard').hidden   = false;
   loadAll();
+
+  // Fresh login has no stored timestamp yet — start the clock now.
+  // A reload with a persisted session keeps whatever was already stored,
+  // so scheduleInactivityCheck() below can tell if the real idle time
+  // (even across a closed tab) already exceeds the limit.
+  if (!localStorage.getItem(LAST_ACTIVE_KEY)) {
+    localStorage.setItem(LAST_ACTIVE_KEY, Date.now().toString());
+  }
+  scheduleInactivityCheck();
+
+  if (sessionUnsub) sessionUnsub();
+  sessionUnsub = db.collection('admin_session').doc(auth.currentUser.uid)
+    .onSnapshot(snap => {
+      const remote = snap.data()?.sessionId;
+      if (remote && mySessionId && remote !== mySessionId) {
+        logActivity('session_kicked', auth.currentUser.email, '');
+        localStorage.setItem(SIGNOUT_REASON_KEY, 'elsewhere');
+        doLogout();
+      }
+    }, err => {
+      console.error('admin_session listener failed:', err);
+    });
 }
+
+// ── Inactivity auto-logout ──
+const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000;
+const LAST_ACTIVE_KEY       = 'uf_admin_last_active';
+let inactivityTimer = null;
+
+// ── Single active session ──
+const SESSION_ID_KEY     = 'uf_admin_session_id';
+const SIGNOUT_REASON_KEY = 'uf_admin_signout_reason';
+let mySessionId = localStorage.getItem(SESSION_ID_KEY) || null; // captured once at load, not re-read per check
+let sessionUnsub = null;
+
+async function doLogout() {
+  clearTimeout(inactivityTimer);
+  if (sessionUnsub) { sessionUnsub(); sessionUnsub = null; }
+  localStorage.removeItem(LAST_ACTIVE_KEY);
+  localStorage.removeItem(SESSION_ID_KEY);
+  mySessionId = null;
+  await auth.signOut();
+  location.reload();
+}
+
+function scheduleInactivityCheck() {
+  clearTimeout(inactivityTimer);
+  const last      = parseInt(localStorage.getItem(LAST_ACTIVE_KEY), 10) || Date.now();
+  const remaining = INACTIVITY_TIMEOUT_MS - (Date.now() - last);
+
+  if (remaining <= 0) {
+    doLogout();
+    return;
+  }
+  inactivityTimer = setTimeout(doLogout, remaining);
+}
+
+function recordActivity() {
+  if (document.getElementById('dashboard').hidden) return;
+  localStorage.setItem(LAST_ACTIVE_KEY, Date.now().toString());
+  scheduleInactivityCheck();
+}
+
+['mousemove', 'keydown', 'click', 'scroll', 'touchstart'].forEach(evt => {
+  document.addEventListener(evt, recordActivity, { passive: true });
+});
 
 // Build login fields dynamically so browser can't autofill
 (function buildLoginFields() {
@@ -56,6 +121,11 @@ function showDashboard() {
 
     try {
       await auth.signInWithEmailAndPassword(email, password);
+      mySessionId = crypto.randomUUID();
+      localStorage.setItem(SESSION_ID_KEY, mySessionId);
+      await db.collection('admin_session').doc(auth.currentUser.uid).set({
+        sessionId: mySessionId, updatedAt: FV.serverTimestamp(),
+      });
       logActivity('login_success', email, '');
       showDashboard();
     } catch (err) {
@@ -73,10 +143,7 @@ function showDashboard() {
   emailEl.addEventListener('keydown', e => { if (e.key === 'Enter') passEl.focus(); });
 })();
 
-document.getElementById('logoutBtn').addEventListener('click', async () => {
-  await auth.signOut();
-  location.reload();
-});
+document.getElementById('logoutBtn').addEventListener('click', doLogout);
 
 // ── Load all data ──
 async function loadAll() {
@@ -358,6 +425,7 @@ function labelForType(type) {
     painting_update:       'Painting Edited',
     painting_delete:       'Painting Deleted',
     paintings_bulk_import: 'Bulk Import',
+    session_kicked:        'Session Ended (New Login)',
   }[type] || type;
 }
 
@@ -394,6 +462,11 @@ document.querySelectorAll('.admin-tab').forEach(tabBtn => {
 });
 
 // ── Init ──
+if (localStorage.getItem(SIGNOUT_REASON_KEY) === 'elsewhere') {
+  document.getElementById('signoutNotice').hidden = false;
+  localStorage.removeItem(SIGNOUT_REASON_KEY);
+}
+
 auth.onAuthStateChanged(user => {
   if (user) showDashboard();
 });

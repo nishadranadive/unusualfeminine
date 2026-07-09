@@ -31,7 +31,7 @@ service cloud.firestore {
       allow create: if request.auth != null
                     && request.resource.data.keys().hasOnly(['type','email','details','timestamp'])
                     && request.resource.data.type in
-                       ['login_success','painting_create','painting_update','painting_delete','paintings_bulk_import']
+                       ['login_success','painting_create','painting_update','painting_delete','paintings_bulk_import','session_kicked']
                     && request.resource.data.email is string
                     && request.resource.data.email.size() < 200
                     && request.resource.data.details is string
@@ -49,6 +49,18 @@ service cloud.firestore {
 
       allow update: if false;
       allow delete: if false;
+    }
+
+    // Single active session per admin — doc ID is the admin's UID, so
+    // each admin can only ever read/claim their own session slot.
+    match /admin_session/{uid} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+                   && request.auth.uid == uid
+                   && request.resource.data.keys().hasOnly(['sessionId','updatedAt'])
+                   && request.resource.data.sessionId is string
+                   && request.resource.data.sessionId.size() < 100
+                   && request.resource.data.updatedAt == request.time;
     }
   }
 }
